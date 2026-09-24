@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GNMTC SRC APP{% endblock %}</title>
+
+    <!-- ============ iOS "Add to Home Screen" Support ============ -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GNMTC SRC">
+    <meta name="theme-color" content="#1a6b47">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='uploads/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='uploads/logo.png') }}">
+    <link rel="manifest" href="{{ url_for('manifest') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- ============ CSRF Token (for JS fetch calls) ============ -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<nav class="navbar navbar-expand-lg sticky-top gnm-nav">
+  <div class="container">
+
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='uploads/logo.png') }}"
+           alt="GNMTC SRC"
+           class="brand-logo"
+           onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+      <span class="brand-mark" style="display:none;">🩺</span>
+      <span class="brand-text">GNMTC SRC APP</span>
+    </a>
+
+    <!-- Hamburger -->
+    <button class="navbar-toggler border-0" type="button"
+            onclick="toggleGnmMenu()"
+            aria-controls="gnmMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+  </div>
+</nav>
+
+<!-- ============ HAMBURGER OVERLAY MENU ============ -->
+<div class="gnm-menu-backdrop" id="gnmBackdrop" onclick="closeGnmMenu()"></div>
+
+<div class="gnm-menu" id="gnmMenu">
+  <button type="button" class="gnm-menu-close" onclick="closeGnmMenu()" aria-label="Close menu">✕</button>
+  <ul class="gnm-menu-list">
+    <li><a href="{{ url_for('index') }}" onclick="closeGnmMenu()">Home</a></li>
+    <li><a href="{{ url_for('about') }}" onclick="closeGnmMenu()">About</a></li>
+    <li><a href="{{ url_for('contact') }}" onclick="closeGnmMenu()">Contact</a></li>
+  </ul>
+</div>
+
+<!-- ============ FLASH MESSAGES ============ -->
+<div class="container mt-3">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show">
+        {{ message }}
+        <button class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<!-- ============ MAIN ============ -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+
+    <div class="row">
+      <div class="col-md-7 mb-3">
+        <div class="footer-brand">GNMTC SRC APP</div>
+        <p class="footer-blurb">
+          {% if footer_about %}
+            {{ footer_about }}
+          {% else %}
+            Goaso Midwifery and Training College — training compassionate,
+            competent midwives for Ghana and beyond since December 2010.
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="col-md-5 mb-3">
+        <p class="fw-semibold text-white mb-2" style="font-size: 0.9rem;">Quick Links</p>
+        <ul class="list-unstyled footer-links">
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="{{ url_for('about') }}">About</a></li>
+          <li><a href="{{ url_for('contact') }}">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <hr style="border-color: rgba(255,255,255,0.15); margin: 1.5rem 0 1rem;">
+
+    <div class="footer-bottom-row">
+      <small class="footer-copy">
+        &copy; {{ now.year }} GNMTC SRC. All rights reserved.
+      </small>
+      <small class="footer-credit-mini">
+        Dev by <strong>Ophyser</strong>
+        · <a href="tel:+233240044138">0240044138</a>
+        · <a href="mailto:klinsmanagyekum334@gmail.com">klinsmanagyekum334@gmail.com</a>
+      </small>
+    </div>
+
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  function toggleGnmMenu() {
+    const menu = document.getElementById('gnmMenu');
+    const backdrop = document.getElementById('gnmBackdrop');
+    const isOpen = menu.classList.contains('open');
+    if (isOpen) {
+      closeGnmMenu();
+    } else {
+      menu.classList.add('open');
+      backdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  function closeGnmMenu() {
+    document.getElementById('gnmMenu').classList.remove('open');
+    document.getElementById('gnmBackdrop').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeGnmMenu();
+  });
+</script>
+
+<!-- ============ GLOBAL CSRF INJECTION ============ -->
+<!-- Auto-injects the CSRF token into every POST form and every fetch() call. -->
+<script>
+  (function () {
+    const CSRF_TOKEN = '{{ csrf_token() }}';
+
+    // 1. Add hidden csrf_token to every <form method="POST"> that lacks it
+    function injectCsrfIntoForms() {
+      document.querySelectorAll('form').forEach(function (form) {
+        const method = (form.getAttribute('method') || 'GET').toUpperCase();
+        if (method !== 'POST') return;
+        if (form.querySelector('input[name="csrf_token"]')) return;
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'csrf_token';
+        input.value = CSRF_TOKEN;
+        form.appendChild(input);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', injectCsrfIntoForms);
+    } else {
+      injectCsrfIntoForms();
+    }
+
+    // 2. Wrap fetch() to add X-CSRFToken header to every POST
+    const originalFetch = window.fetch;
+    window.fetch = function (url, options) {
+      options = options || {};
+      const method = (options.method || 'GET').toUpperCase();
+
+      if (method === 'POST') {
+        // Clone headers (Headers object or plain object)
+        let headers = options.headers || {};
+        if (headers instanceof Headers) {
+          headers.set('X-CSRFToken', CSRF_TOKEN);
+        } else {
+          headers['X-CSRFToken'] = CSRF_TOKEN;
+        }
+        options.headers = headers;
+      }
+
+      return originalFetch.call(this, url, options);
+    };
+  })();
+</script>
+
+</body>
+</html>

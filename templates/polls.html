@@ -1,0 +1,315 @@
+{% extends 'base_bare.html' %}
+{% block title %}Polls &amp; Surveys — GNMTC SRC{% endblock %}
+
+{% block content %}
+
+<div class="polls-page">
+
+  <!-- ============ HEADER ============ -->
+  <header class="polls-header">
+    <a href="{{ url_for('src_student') }}" class="polls-back">← Back</a>
+
+    <img src="{{ url_for('static', filename='uploads/logo.png') }}"
+         alt="GNMTC SRC"
+         class="polls-logo"
+         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+    <div class="polls-logo polls-logo-fallback" style="display:none;">🩺</div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <div class="polls-hero">
+    <span class="polls-hero-eyebrow">Let Your Vote Count</span>
+    <h1 class="polls-hero-title">Take Part in Survey</h1>
+    <p class="polls-hero-sub">Share your voice. Every vote shapes the SRC.</p>
+  </div>
+
+  <!-- ============ LOCKED BANNER (Completed year) ============ -->
+  {% if not can_vote %}
+  <div class="polls-locked-banner">
+    <span class="polls-locked-icon">🎓</span>
+    <div>
+      <strong>Your year group is marked Completed.</strong>
+      You can see the results, but voting is closed for your group.
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ============ POLLS LIST ============ -->
+  <div class="polls-wrap">
+
+    {% if polls %}
+      {% for poll in polls %}
+      <section class="poll-card" data-poll-id="{{ poll.id }}">
+
+        <div class="poll-head">
+          <span class="poll-index">#{{ loop.index }}</span>
+          <h2 class="poll-question">{{ poll.question }}</h2>
+          {% if poll.description %}
+          <p class="poll-desc">{{ poll.description }}</p>
+          {% endif %}
+        </div>
+
+        <div class="poll-options">
+          {% for opt in poll.options %}
+          <button type="button"
+                  class="poll-opt{% if poll.user_vote == opt.id %} voted{% endif %}{% if not can_vote %} poll-opt-disabled{% endif %}"
+                  data-poll-id="{{ poll.id }}"
+                  data-option-id="{{ opt.id }}"
+                  {% if can_vote %}
+                    onclick="votePoll({{ poll.id }}, {{ opt.id }})"
+                  {% else %}
+                    onclick="showLockedMessage()"
+                  {% endif %}>
+
+            <!-- Round avatar + name -->
+            <div class="poll-opt-head">
+              {% if opt.image %}
+                {% if opt.image.startswith('http') %}
+                  <img src="{{ opt.image }}" alt="{{ opt.name }}" class="poll-opt-avatar">
+                {% else %}
+                  <img src="{{ url_for('static', filename='uploads/' + opt.image) }}"
+                       alt="{{ opt.name }}" class="poll-opt-avatar">
+                {% endif %}
+              {% else %}
+                <div class="poll-opt-avatar poll-opt-avatar-fallback">{{ opt.name[0]|upper }}</div>
+              {% endif %}
+              <span class="poll-opt-name">{{ opt.name }}</span>
+              {% if poll.user_vote == opt.id %}
+              <span class="poll-opt-check">✓</span>
+              {% endif %}
+            </div>
+
+            <!-- Bar -->
+            <div class="poll-opt-bar">
+              <div class="poll-opt-bar-fill" style="width: {{ opt.percent }}%;"></div>
+            </div>
+
+            <!-- Small text below -->
+            <div class="poll-opt-meta">
+              <span class="poll-opt-votes">
+                {{ opt.count }} vote{{ 's' if opt.count != 1 else '' }}
+              </span>
+              <span class="poll-opt-pct">{{ opt.percent }}%</span>
+            </div>
+
+          </button>
+          {% endfor %}
+        </div>
+
+        <div class="poll-total">
+          <span class="poll-total-icon">👥</span>
+          Total votes cast: <strong>{{ poll.total_votes }}</strong>
+        </div>
+
+        {% if poll.user_vote and can_vote %}
+        <p class="poll-note">✓ You voted. Tap a different option to change your vote.</p>
+        {% endif %}
+
+      </section>
+      {% endfor %}
+
+    {% else %}
+      <!-- ============ NO POLLS STATE ============ -->
+      <div class="no-polls-card">
+        <div class="no-polls-icon">🗳️</div>
+        <h3 class="no-polls-title">No Polls Available</h3>
+        <p class="no-polls-text">
+          Do you have something in mind we can vote on?
+        </p>
+
+        <div class="no-polls-buttons" id="noPollsButtons">
+          <button type="button" class="no-polls-yes" onclick="showSuggestionForm()">Yes</button>
+          <button type="button" class="no-polls-no" onclick="declineSuggestion()">No</button>
+        </div>
+
+        <!-- Yes → suggestion form -->
+        <div class="no-polls-suggest" id="noPollsSuggest" style="display:none;">
+          <label class="no-polls-label">What would you like us to vote on?</label>
+          <textarea id="suggestionText" class="no-polls-textarea" rows="4"
+                    placeholder="E.g. Should we hold a sports day next semester?"></textarea>
+          <div class="no-polls-suggest-actions">
+            <button type="button" class="no-polls-push" onclick="confirmPush()">Push Request</button>
+            <button type="button" class="no-polls-cancel" onclick="cancelSuggestion()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="polls-modal-backdrop" id="confirmBackdrop">
+  <div class="polls-modal">
+    <h3 class="polls-modal-title">Confirm Push Request</h3>
+    <p class="polls-modal-text">
+      Do you want to push this request to the administration?
+    </p>
+    <p class="polls-modal-note">
+      Once you confirm, administration will get a notification that you have an agenda to push
+      along with your details. For clarity, you will be called to explain your agenda.
+    </p>
+    <div class="polls-modal-actions">
+      <button type="button" class="polls-modal-confirm" onclick="sendPushRequest()">Confirm</button>
+      <button type="button" class="polls-modal-decline" onclick="closeConfirm()">Decline</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SUCCESS MODAL ============ -->
+<div class="polls-modal-backdrop" id="successBackdrop">
+  <div class="polls-modal">
+    <div class="polls-modal-success-icon">✅</div>
+    <h3 class="polls-modal-title">Request Sent</h3>
+    <p class="polls-modal-text">
+      Your agenda has been pushed to the administration. You will be contacted soon.
+    </p>
+    <div class="polls-modal-actions">
+      <button type="button" class="polls-modal-confirm" onclick="closeSuccess()">Okay</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LOCKED MODAL ============ -->
+<div class="polls-modal-backdrop" id="lockedBackdrop">
+  <div class="polls-modal">
+    <div class="polls-modal-success-icon">🎓</div>
+    <h3 class="polls-modal-title">Voting Closed</h3>
+    <p class="polls-modal-text">
+      Your year group is marked <strong>Completed</strong>.
+      Only active students can cast votes.
+    </p>
+    <div class="polls-modal-actions">
+      <button type="button" class="polls-modal-confirm" onclick="closeLocked()">Okay</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CAN_VOTE = {{ 'true' if can_vote else 'false' }};
+
+  /* ---------- VOTE ---------- */
+  function votePoll(pollId, optionId) {
+    if (!CAN_VOTE) {
+      showLockedMessage();
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('poll_id', pollId);
+    fd.append('option_id', optionId);
+
+    fetch('{{ url_for("poll_vote") }}', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.ok) updatePollUI(data.poll);
+        else alert(data.error || 'Could not record your vote.');
+      })
+      .catch(function () { alert('Network error. Please try again.'); });
+  }
+
+  function updatePollUI(poll) {
+    const card = document.querySelector('.poll-card[data-poll-id="' + poll.id + '"]');
+    if (!card) return;
+
+    card.querySelectorAll('.poll-opt').forEach(function (btn) {
+      const optId = parseInt(btn.dataset.optionId, 10);
+      const opt = poll.options.find(function (o) { return o.id === optId; });
+      if (!opt) return;
+
+      btn.querySelector('.poll-opt-bar-fill').style.width = opt.percent + '%';
+      btn.querySelector('.poll-opt-votes').textContent =
+        opt.count + ' vote' + (opt.count === 1 ? '' : 's');
+      btn.querySelector('.poll-opt-pct').textContent = opt.percent + '%';
+
+      const existingCheck = btn.querySelector('.poll-opt-check');
+      if (opt.id === poll.user_vote) {
+        btn.classList.add('voted');
+        if (!existingCheck) {
+          const check = document.createElement('span');
+          check.className = 'poll-opt-check';
+          check.textContent = '✓';
+          btn.querySelector('.poll-opt-head').appendChild(check);
+        }
+      } else {
+        btn.classList.remove('voted');
+        if (existingCheck) existingCheck.remove();
+      }
+    });
+
+    const total = card.querySelector('.poll-total strong');
+    if (total) total.textContent = poll.total_votes;
+
+    let note = card.querySelector('.poll-note');
+    if (poll.user_vote && CAN_VOTE && !note) {
+      note = document.createElement('p');
+      note.className = 'poll-note';
+      note.textContent = '✓ You voted. Tap a different option to change your vote.';
+      card.appendChild(note);
+    } else if ((!poll.user_vote || !CAN_VOTE) && note) {
+      note.remove();
+    }
+  }
+
+  /* ---------- LOCKED ---------- */
+  function showLockedMessage() {
+    document.getElementById('lockedBackdrop').classList.add('open');
+  }
+  function closeLocked() {
+    document.getElementById('lockedBackdrop').classList.remove('open');
+  }
+
+  /* ---------- SUGGESTION FLOW ---------- */
+  function showSuggestionForm() {
+    document.getElementById('noPollsButtons').style.display = 'none';
+    document.getElementById('noPollsSuggest').style.display = 'block';
+  }
+
+  function cancelSuggestion() {
+    document.getElementById('noPollsSuggest').style.display = 'none';
+    document.getElementById('noPollsButtons').style.display = 'flex';
+    document.getElementById('suggestionText').value = '';
+  }
+
+  function declineSuggestion() {
+    alert('No problem! Thanks for visiting the polls page.');
+  }
+
+  function confirmPush() {
+    const txt = document.getElementById('suggestionText').value.trim();
+    if (!txt) { alert('Please write your suggestion first.'); return; }
+    document.getElementById('confirmBackdrop').classList.add('open');
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirmBackdrop').classList.remove('open');
+  }
+
+  function sendPushRequest() {
+    const txt = document.getElementById('suggestionText').value.trim();
+    const fd = new FormData();
+    fd.append('suggestion', txt);
+
+    fetch('{{ url_for("poll_request") }}', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        closeConfirm();
+        if (data.ok) {
+          document.getElementById('successBackdrop').classList.add('open');
+        } else {
+          alert(data.error || 'Could not send your request.');
+        }
+      })
+      .catch(function () {
+        closeConfirm();
+        alert('Network error. Please try again.');
+      });
+  }
+
+  function closeSuccess() {
+    document.getElementById('successBackdrop').classList.remove('open');
+    location.reload();
+  }
+</script>
+
+{% endblock %}

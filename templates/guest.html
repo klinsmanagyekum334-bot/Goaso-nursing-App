@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}Guest — GNMTC SRC{% endblock %}
+
+{% block content %}
+
+<div class="guest-wrap">
+
+  <!-- ============ HERO / WELCOME ============ -->
+  <section class="guest-hero">
+    <div class="guest-hero-inner">
+      <span class="guest-hero-eyebrow">Welcome</span>
+      <h1 class="guest-hero-title">Welcome to Goaso Midwifery &amp; Training College</h1>
+      <p class="guest-hero-text">{{ info.about }}</p>
+    </div>
+  </section>
+
+  <!-- ============ LEADERS (President + Principal) ============ -->
+  <section class="guest-section">
+    <div class="guest-section-head">
+      <span class="guest-eyebrow">Our Leadership</span>
+      <h2 class="guest-section-title">Meet the Leaders</h2>
+    </div>
+
+    <div class="guest-leaders-grid">
+      <!-- President -->
+      <article class="guest-leader-card guest-leader-president">
+        <div class="guest-leader-photo-wrap">
+          {% if info.president_photo.startswith('http') %}
+            <img src="{{ info.president_photo }}" alt="{{ info.president_name }}" class="guest-leader-photo">
+          {% else %}
+            <img src="{{ url_for('static', filename='uploads/' + info.president_photo) }}"
+                 alt="{{ info.president_name }}" class="guest-leader-photo">
+          {% endif %}
+          <span class="guest-leader-badge">SRC President</span>
+        </div>
+        <h3 class="guest-leader-name">{{ info.president_name }}</h3>
+        <p class="guest-leader-role">{{ info.president_title }}</p>
+      </article>
+
+      <!-- Principal -->
+      <article class="guest-leader-card guest-leader-principal">
+        <div class="guest-leader-photo-wrap">
+          {% if info.principal_photo.startswith('http') %}
+            <img src="{{ info.principal_photo }}" alt="{{ info.principal_name }}" class="guest-leader-photo">
+          {% else %}
+            <img src="{{ url_for('static', filename='uploads/' + info.principal_photo) }}"
+                 alt="{{ info.principal_name }}" class="guest-leader-photo">
+          {% endif %}
+          <span class="guest-leader-badge">Principal</span>
+        </div>
+        <h3 class="guest-leader-name">{{ info.principal_name }}</h3>
+        <p class="guest-leader-role">{{ info.principal_title }}</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ ADMINISTRATION (grid with photos) ============ -->
+  {% if administration %}
+  <section class="guest-section">
+    <div class="guest-section-head">
+      <span class="guest-eyebrow">The Team</span>
+      <h2 class="guest-section-title">The Administration</h2>
+    </div>
+
+    <div class="guest-admin-grid">
+      {% for person in administration %}
+      <article class="guest-admin-card">
+        {% if person.photo %}
+          {% if person.photo.startswith('http') %}
+            <img src="{{ person.photo }}" alt="{{ person.name }}" class="guest-admin-photo">
+          {% else %}
+            <img src="{{ url_for('static', filename='uploads/' + person.photo) }}"
+                 alt="{{ person.name }}" class="guest-admin-photo">
+          {% endif %}
+        {% else %}
+          <div class="guest-admin-photo guest-admin-initials">
+            {{ person.name.split()[0][0] }}{{ person.name.split()[-1][0] }}
+          </div>
+        {% endif %}
+        <h4 class="guest-admin-name">{{ person.name }}</h4>
+        <p class="guest-admin-role">{{ person.role }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ============ AIM & AMBITION (2-col grid) ============ -->
+  <section class="guest-section">
+    <div class="guest-aim-grid">
+      <article class="guest-aim-card guest-aim-card-teal">
+        <div class="guest-aim-icon">🎯</div>
+        <h3 class="guest-aim-title">Our Aim</h3>
+        <p class="guest-aim-text">{{ info.aim }}</p>
+      </article>
+
+      <article class="guest-aim-card guest-aim-card-gold">
+        <div class="guest-aim-icon">🚀</div>
+        <h3 class="guest-aim-title">Our Ambition</h3>
+        <p class="guest-aim-text">{{ info.ambition }}</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ COURSES (2-col grid on phone) ============ -->
+  {% if info.courses %}
+  <section class="guest-section">
+    <div class="guest-section-head">
+      <span class="guest-eyebrow">Academics</span>
+      <h2 class="guest-section-title">Courses We Offer</h2>
+    </div>
+
+    <div class="guest-courses-grid">
+      {% for course in info.courses %}
+      <div class="guest-course-tile">
+        <span class="guest-course-icon">📘</span>
+        <span class="guest-course-text">{{ course }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ============ GENERAL INFO (info + contact grid) ============ -->
+  <section class="guest-section">
+    <div class="guest-section-head">
+      <span class="guest-eyebrow">Find Us</span>
+      <h2 class="guest-section-title">General Information</h2>
+    </div>
+
+    <div class="guest-info-grid">
+      <div class="guest-info-card">
+        <h3 class="guest-info-title">About the School</h3>
+        <p class="guest-info-text">{{ info.about }}</p>
+
+        <ul class="guest-info-list">
+          <li>
+            <span class="guest-info-icon">📍</span>
+            <div>
+              <strong>Location</strong><br>
+              <span>{{ info.location }}</span>
+            </div>
+          </li>
+          <li>
+            <span class="guest-info-icon">✉️</span>
+            <div>
+              <strong>Email</strong><br>
+              <a href="mailto:{{ info.email }}">{{ info.email }}</a>
+            </div>
+          </li>
+          <li>
+            <span class="guest-info-icon">🌐</span>
+            <div>
+              <strong>Website</strong><br>
+              <a href="http://{{ info.website }}" target="_blank">{{ info.website }}</a>
+            </div>
+          </li>
+          <li>
+            <span class="guest-info-icon">📞</span>
+            <div>
+              <strong>Phone</strong><br>
+              <a href="tel:{{ info.phone }}">{{ info.phone }}</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="guest-contact-card">
+        <div class="guest-contact-glow"></div>
+        <div class="guest-contact-inner">
+          <div class="guest-contact-icon">📞</div>
+          <h3 class="guest-contact-title">Get in Touch</h3>
+          <p class="guest-contact-text">
+            Have questions about admissions, courses, or the SRC? Call or message us directly.
+          </p>
+
+          <div class="guest-contact-actions">
+            <a href="tel:{{ info.phone }}" class="guest-contact-btn guest-contact-call">
+              📞 Call the School
+            </a>
+            <a href="https://wa.me/{{ info.whatsapp }}?text=Hello%20GNMTC%2C%20I%20have%20an%20enquiry"
+               target="_blank" class="guest-contact-btn guest-contact-wa">
+              💬 WhatsApp Us
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  {% if gallery %}
+  <section class="guest-section">
+    <div class="guest-section-head">
+      <span class="guest-eyebrow">Life at GNMTC</span>
+      <h2 class="guest-section-title">{{ info.gallery_heading }}</h2>
+    </div>
+
+    <div class="guest-gallery-grid">
+      {% for g in gallery %}
+      <figure class="guest-gallery-item">
+        {% if g.image.startswith('http') %}
+          <img src="{{ g.image }}" alt="{{ g.caption or 'GNMTC' }}" class="guest-gallery-img">
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' + g.image) }}"
+               alt="{{ g.caption or 'GNMTC' }}" class="guest-gallery-img">
+        {% endif %}
+        {% if g.caption %}
+        <figcaption class="guest-gallery-caption">{{ g.caption }}</figcaption>
+        {% endif %}
+      </figure>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+
+{% endblock %}

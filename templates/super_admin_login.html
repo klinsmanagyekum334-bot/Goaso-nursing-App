@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Super Admin — GNMTC{% endblock %}
+
+{% block content %}
+
+<!-- ============ PAGE HEADER ============ -->
+<section class="container my-5">
+  <div class="src-page-header" style="background: linear-gradient(135deg, #0f3d3e 0%, #1a5f5f 100%);">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <span class="eyebrow">Restricted Area</span>
+        <h1 style="margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem);">
+          Super Admin Control Panel
+        </h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 0.35rem 0 0;">
+          Full system control — manage admins, data, and settings
+        </p>
+      </div>
+      <a href="{{ url_for('super_admin_logout') }}" class="btn btn-outline-primary">
+        Logout
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OVERVIEW STATS ============ -->
+<section class="container mb-5">
+  <div class="row g-4">
+    <div class="col-md-3 col-6">
+      <div class="super-stat">
+        <div class="super-stat-value">{{ stats.members }}</div>
+        <div class="super-stat-label">Members</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="super-stat">
+        <div class="super-stat-value">{{ stats.events }}</div>
+        <div class="super-stat-label">Events</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="super-stat">
+        <div class="super-stat-value">{{ stats.news }}</div>
+        <div class="super-stat-label">News Posts</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="super-stat">
+        <div class="super-stat-value">{{ stats.contributions }}</div>
+        <div class="super-stat-label">Funds</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTROL PANEL ============ -->
+<section class="container mb-5">
+  <div class="section-title">
+    <span class="eyebrow">Controls</span>
+    <h2>Management</h2>
+  </div>
+
+  <div class="row g-4">
+    <!-- Manage Admins -->
+    <div class="col-md-6">
+      <div class="super-card">
+        <div class="super-card-icon">👥</div>
+        <h3>Manage Admins</h3>
+        <p>Create, edit, or deactivate SRC Admins, Treasurers, and Editors.</p>
+        <span class="soon-tag">coming soon</span>
+      </div>
+    </div>
+
+    <!-- Login Activity -->
+    <div class="col-md-6">
+      <div class="super-card">
+        <div class="super-card-icon">🔐</div>
+        <h3>Login Activity</h3>
+        <p>See who logged in, when, and from where.</p>
+        <span class="soon-tag">coming soon</span>
+      </div>
+    </div>
+
+    <!-- Site Settings -->
+    <div class="col-md-6">
+      <div class="super-card">
+        <div class="super-card-icon">⚙️</div>
+        <h3>Site Settings</h3>
+        <p>Edit school info, branding, contact details, and feature toggles.</p>
+        <span class="soon-tag">coming soon</span>
+      </div>
+    </div>
+
+    <!-- Backup & Data -->
+    <div class="col-md-6">
+      <div class="super-card">
+        <div class="super-card-icon">💾</div>
+        <h3>Backup & Data</h3>
+        <p>Export the database, restore backups, view system health.</p>
+        <span class="soon-tag">coming soon</span>
+      </div>
+    </div>
+
+    <!-- SRC Content -->
+    <div class="col-md-6">
+      <div class="super-card">
+        <div class="super-card-icon">📰</div>
+        <h3>SRC Content</h3>
+        <p>Manage executives, past presidents, past principals, and news.</p>
+        <span class="soon-tag">coming soon</span>
+      </div>
+    </div>
+
+    <!-- Global Payments -->
+    <div class="col-md-6">
+      <div class="super-card">
+        <div class="super-card-icon">💰</div>
+        <h3>All Payments</h3>
+        <p>View every contribution and payment across all members.</p>
+        <span class="soon-tag">coming soon</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

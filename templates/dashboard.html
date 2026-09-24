@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Welcome, {{ current_user.full_name }}</h1>
+<p class="text-muted">{{ current_user.program or 'Alumni Member' }} — Class of {{ current_user.graduation_year or 'N/A' }}</p>
+
+<div class="row mt-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>My Profile</h5>
+        <p class="small">{{ current_user.bio or 'Add a short bio to introduce yourself.' }}</p>
+        <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-outline-primary">Edit Profile</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Alumni Directory</h5>
+        <p class="small">Connect with fellow graduates.</p>
+        <a href="{{ url_for('directory') }}" class="btn btn-sm btn-outline-primary">Browse Directory</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Events</h5>
+        <p class="small">See upcoming reunions and CPD sessions.</p>
+        <a href="{{ url_for('events') }}" class="btn btn-sm btn-outline-primary">View Events</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if current_user.is_admin %}
+<hr class="my-4">
+<h4>Admin Actions</h4>
+<a href="{{ url_for('new_event') }}" class="btn btn-primary btn-sm">+ New Event</a>
+<a href="{{ url_for('new_news') }}" class="btn btn-primary btn-sm">+ Post News</a>
+{% endif %}
+{% endblock %}

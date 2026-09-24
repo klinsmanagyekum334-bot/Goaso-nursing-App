@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}SRC APP — GNMTC{% endblock %}
+
+{% block content %}
+
+<div class="home-dark">
+
+  <!-- LOGO -->
+  <div class="home-logo-wrap">
+    <img src="{{ url_for('static', filename='uploads/logo.png') }}"
+         alt="SRC APP"
+         class="home-logo"
+         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+    <div class="home-logo home-logo-fallback" style="display:none;">🩺</div>
+  </div>
+
+  <!-- TITLE -->
+  <h1 class="home-title">SRC APP</h1>
+
+  <!-- NEWS CARDS -->
+  <div class="home-section container">
+    <div class="home-section-head">
+      <span class="home-eyebrow">Latest Updates</span>
+      <h2 class="home-section-title">News &amp; Information</h2>
+    </div>
+
+    <div class="row g-4">
+      {% for card in home_cards %}
+      <div class="col-md-6">
+        <div class="glass-card h-100">
+          {% if card.image %}
+            {% if card.image.startswith('http') %}
+              <img src="{{ card.image }}" alt="{{ card.title }}" class="glass-img">
+            {% else %}
+              <img src="{{ url_for('static', filename='uploads/' + card.image) }}"
+                   alt="{{ card.title }}" class="glass-img">
+            {% endif %}
+          {% endif %}
+          <div class="glass-body">
+            {% if card.eyebrow %}<span class="glass-eyebrow">{{ card.eyebrow }}</span>{% endif %}
+            <h3 class="glass-title">{{ card.title }}</h3>
+            <p class="glass-text">{{ card.description }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- GUEST / MEMBER GRID -->
+  <div class="home-section container">
+    <div class="home-section-head">
+      <span class="home-eyebrow">Choose Your Path</span>
+      <h2 class="home-section-title">Enter the Portal</h2>
+    </div>
+
+    <div class="portal-grid">
+      <a href="{{ url_for('guest') }}" class="portal-tile tile-guest">
+        <div class="tile-glow"></div>
+        <div class="tile-inner">
+          <div class="tile-icon">👋</div>
+          <h3 class="tile-title">Guest</h3>
+          <p class="tile-sub">Enter as a visitor</p>
+        </div>
+      </a>
+
+      <a href="{{ url_for('src_student') if student_logged_in else url_for('member_login') }}"
+         class="portal-tile tile-member">
+        <div class="tile-glow"></div>
+        <div class="tile-inner">
+          <div class="tile-icon">🎓</div>
+          <h3 class="tile-title">Member</h3>
+          <p class="tile-sub">Enter as a student</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

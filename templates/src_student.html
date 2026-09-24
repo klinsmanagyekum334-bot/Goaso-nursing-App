@@ -1,0 +1,413 @@
+{% extends 'base_bare.html' %}
+{% block title %}SRC Student — GNMTC{% endblock %}
+
+{% block content %}
+
+<div class="src-page">
+
+  <!-- ============ TOP BAR (logo only) ============ -->
+  <div class="src-topbar">
+    <button type="button" class="src-menu-btn" onclick="openProfileDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <img src="{{ url_for('static', filename='uploads/logo.png') }}"
+         alt="GNMTC SRC"
+         class="src-topbar-logo"
+         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+    <div class="src-topbar-logo src-topbar-fallback" style="display:none;">🩺</div>
+
+    <a href="{{ url_for('member_logout') }}" class="src-topbar-logout">Logout</a>
+  </div>
+
+  <!-- ============ SLIDE-IN PROFILE DRAWER ============ -->
+  <div class="src-drawer-backdrop" id="srcDrawerBackdrop" onclick="closeProfileDrawer()"></div>
+
+  <aside class="src-drawer" id="srcDrawer">
+    <button type="button" class="src-drawer-close" onclick="closeProfileDrawer()" aria-label="Close">✕</button>
+
+    <div class="src-drawer-profile">
+      {% if student.profile_pic %}
+        {% if student.profile_pic.startswith('http') %}
+          <img src="{{ student.profile_pic }}" alt="{{ student.name }}" class="src-drawer-avatar">
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' + student.profile_pic) }}"
+               alt="{{ student.name }}" class="src-drawer-avatar">
+        {% endif %}
+      {% else %}
+        <div class="src-drawer-avatar src-drawer-avatar-fallback">{{ student.name[0]|upper }}</div>
+      {% endif %}
+
+      <h3 class="src-drawer-name">{{ student.name }}</h3>
+      <span class="src-drawer-status src-status-{{ student.status|lower }}">{{ student.status }}</span>
+
+      {% if year_status == 'Completed' %}
+      <span class="src-drawer-year-badge src-year-completed">
+        🎓 Year Completed
+      </span>
+      {% else %}
+      <span class="src-drawer-year-badge src-year-active">
+        🟢 Active Year
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Info list (view mode) -->
+    <div class="src-drawer-info" id="srcInfoView">
+      <div class="src-drawer-row"><span>ID</span><strong>{{ student.student_id }}</strong></div>
+      <div class="src-drawer-row"><span>Gender</span><strong>{{ student.gender or '—' }}</strong></div>
+      <div class="src-drawer-row"><span>Year Group</span><strong>{{ student.year_group or '—' }}</strong></div>
+      <div class="src-drawer-row"><span>Status</span><strong>{{ student.status }}</strong></div>
+      <div class="src-drawer-row"><span>Course</span><strong>{{ student.course or '—' }}</strong></div>
+      <div class="src-drawer-row"><span>Level</span><strong>{{ student.level or '—' }}</strong></div>
+      <div class="src-drawer-row"><span>Email</span><strong>{{ student.email or '—' }}</strong></div>
+      <div class="src-drawer-row"><span>Phone</span><strong>{{ student.phone or '—' }}</strong></div>
+      <div class="src-drawer-row"><span>Password</span><strong>••••••••</strong></div>
+
+      <button type="button" class="src-drawer-edit-btn" onclick="toggleEdit()">
+        ✏️ Edit Information
+      </button>
+
+      <button type="button" class="src-drawer-complaint-btn" onclick="toggleComplaint()">
+        📩 Send Complaint
+      </button>
+    </div>
+
+    <!-- Edit mode -->
+    <form method="POST" action="{{ url_for('src_student_profile_update') }}"
+          enctype="multipart/form-data" class="src-drawer-edit" id="srcEditForm" style="display:none;">
+      <div class="src-drawer-row-static"><span>ID</span><strong>{{ student.student_id }}</strong></div>
+      <div class="src-drawer-row-static"><span>Year Group</span><strong>{{ student.year_group or '—' }}</strong></div>
+
+      {% if year_status == 'Completed' %}
+      <div class="src-drawer-lock-note">
+        🔒 Your year group is <strong>Completed</strong>. Only phone, password,
+        and profile picture can be changed. Contact admin for other changes.
+      </div>
+      {% endif %}
+
+      {% if year_status == 'Active' %}
+      <label class="src-drawer-label">Full Name</label>
+      <input type="text" name="name" class="src-drawer-input"
+             value="{{ student.name or '' }}">
+
+      <label class="src-drawer-label">Gender</label>
+      <select name="gender" class="src-drawer-input">
+        <option value="">—</option>
+        <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+        <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+      </select>
+
+      <label class="src-drawer-label">Date of Birth (YYYY-MM-DD)</label>
+      <input type="text" name="dob" class="src-drawer-input"
+             value="{{ student.dob or '' }}" placeholder="e.g. 2000-05-15">
+
+      <label class="src-drawer-label">Course</label>
+      <input type="text" name="course" class="src-drawer-input"
+             value="{{ student.course or '' }}">
+
+      <label class="src-drawer-label">Level</label>
+      <select name="level" class="src-drawer-input">
+        <option value="">—</option>
+        {% for lv in ['100', '200', '300', '400'] %}
+        <option value="{{ lv }}" {% if student.level == lv %}selected{% endif %}>Level {{ lv }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
+
+      <label class="src-drawer-label">Phone</label>
+      <input type="text" name="phone" class="src-drawer-input"
+             value="{{ student.phone or '' }}">
+
+      <label class="src-drawer-label">Change Password (leave empty to keep)</label>
+      <input type="password" name="new_password" class="src-drawer-input"
+             placeholder="New password">
+
+      <label class="src-drawer-label">Profile Picture</label>
+      <input type="file" name="profile_pic" class="src-drawer-input" accept="image/*">
+
+      <div class="src-drawer-actions">
+        <button type="submit" class="src-drawer-save">Save</button>
+        <button type="button" class="src-drawer-cancel" onclick="toggleEdit()">Cancel</button>
+      </div>
+    </form>
+
+    <!-- Complaint form -->
+    <form method="POST" action="{{ url_for('src_student_complaint') }}"
+          class="src-drawer-complaint-form" id="srcComplaintForm" style="display:none;">
+      <div class="src-drawer-row-static">
+        <span>Sending as</span><strong>{{ student.name }}</strong>
+      </div>
+
+      <label class="src-drawer-label">Subject</label>
+      <input type="text" name="subject" class="src-drawer-input"
+             placeholder="e.g. Issue with results">
+
+      <label class="src-drawer-label">Message</label>
+      <textarea name="message" class="src-drawer-input" rows="4"
+                placeholder="Describe your complaint..." required></textarea>
+
+      <div class="src-drawer-actions">
+        <button type="submit" class="src-drawer-save">Send</button>
+        <button type="button" class="src-drawer-cancel" onclick="toggleComplaint()">Cancel</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- ============ ANNOUNCEMENTS ============ -->
+  <section class="src-ann-section">
+    <div class="src-section-head">
+      <span class="src-section-eyebrow">Notice Board</span>
+      <h2 class="src-section-title">Announcements</h2>
+    </div>
+
+    {% if announcements %}
+    <div class="src-ann-grid">
+      {% for a in announcements %}
+      <article class="src-ann-card">
+        <div class="src-ann-top">
+          <span class="src-ann-cat">{{ a.category }}</span>
+          {% if a.is_pinned %}<span class="src-ann-pin">📌</span>{% endif %}
+        </div>
+
+        <h3 class="src-ann-title">{{ a.title }}</h3>
+        <p class="src-ann-body">{{ a.body }}</p>
+
+        {% if a.file %}
+        <a href="{{ a.file if a.file.startswith('http') else url_for('download_file', filename=a.file) }}"
+           class="src-ann-file" download>
+          📎 {{ a.file_name or a.file }}
+        </a>
+        {% endif %}
+
+        <span class="src-ann-date">{{ a.published_at.strftime('%b %d, %Y') }}</span>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="src-empty">No announcements yet.</div>
+    {% endif %}
+  </section>
+
+  <!-- ============ PRESIDENT + PRINCIPAL ============ -->
+  <section class="src-section">
+    <div class="src-section-head">
+      <span class="src-section-eyebrow">Leadership</span>
+      <h2 class="src-section-title">Our Leaders</h2>
+    </div>
+
+    <div class="src-leaders-grid">
+      <article class="src-leader-card">
+        {% if src_president.photo.startswith('http') %}
+          <img src="{{ src_president.photo }}" alt="{{ src_president.name }}" class="src-leader-photo">
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' + src_president.photo) }}"
+               alt="{{ src_president.name }}" class="src-leader-photo">
+        {% endif %}
+        <h3 class="src-leader-name">{{ src_president.name }}</h3>
+        <p class="src-leader-role">{{ src_president.title }}</p>
+      </article>
+
+      <article class="src-leader-card">
+        {% if src_principal.photo.startswith('http') %}
+          <img src="{{ src_principal.photo }}" alt="{{ src_principal.name }}" class="src-leader-photo">
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' + src_principal.photo) }}"
+               alt="{{ src_principal.name }}" class="src-leader-photo">
+        {% endif %}
+        <h3 class="src-leader-name">{{ src_principal.name }}</h3>
+        <p class="src-leader-role">{{ src_principal.title }}</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ SRC EXECUTIVES ============ -->
+  <section class="src-section">
+    <div class="src-section-head">
+      <span class="src-section-eyebrow">Council</span>
+      <h2 class="src-section-title">SRC Executives</h2>
+    </div>
+
+    <details class="src-matrix-wrap">
+      <summary class="src-matrix-summary">
+        <span>Tap to view all {{ executives|length }} executives</span>
+        <span class="src-matrix-caret">▾</span>
+      </summary>
+
+      <div class="src-matrix">
+        {% for ex in executives %}
+        <div class="src-matrix-card">
+          {% if ex.photo %}
+            {% if ex.photo.startswith('http') %}
+              <img src="{{ ex.photo }}" alt="{{ ex.name }}" class="src-matrix-photo">
+            {% else %}
+              <img src="{{ url_for('static', filename='uploads/' + ex.photo) }}"
+                   alt="{{ ex.name }}" class="src-matrix-photo">
+            {% endif %}
+          {% else %}
+            <div class="src-matrix-photo src-matrix-fallback">{{ ex.name[0]|upper }}</div>
+          {% endif %}
+          <h4 class="src-matrix-name">{{ ex.name }}</h4>
+          <p class="src-matrix-role">{{ ex.position }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PAST PRESIDENTS ============ -->
+  <section class="src-section">
+    <div class="src-section-head">
+      <span class="src-section-eyebrow">Archives</span>
+      <h2 class="src-section-title">Past Presidents</h2>
+    </div>
+
+    <details class="src-matrix-wrap">
+      <summary class="src-matrix-summary">
+        <span>Tap to view past presidents</span>
+        <span class="src-matrix-caret">▾</span>
+      </summary>
+
+      <div class="src-matrix">
+        {% for pl in past_presidents %}
+        <div class="src-matrix-card">
+          {% if pl.photo %}
+            {% if pl.photo.startswith('http') %}
+              <img src="{{ pl.photo }}" alt="{{ pl.name }}" class="src-matrix-photo">
+            {% else %}
+              <img src="{{ url_for('static', filename='uploads/' + pl.photo) }}"
+                   alt="{{ pl.name }}" class="src-matrix-photo">
+            {% endif %}
+          {% else %}
+            <div class="src-matrix-photo src-matrix-fallback">{{ pl.name[0]|upper }}</div>
+          {% endif %}
+          <h4 class="src-matrix-name">{{ pl.name }}</h4>
+          <p class="src-matrix-role">{{ pl.years }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PAST PRINCIPALS ============ -->
+  <section class="src-section">
+    <div class="src-section-head">
+      <span class="src-section-eyebrow">Archives</span>
+      <h2 class="src-section-title">Past Principals</h2>
+    </div>
+
+    <details class="src-matrix-wrap">
+      <summary class="src-matrix-summary">
+        <span>Tap to view past principals</span>
+        <span class="src-matrix-caret">▾</span>
+      </summary>
+
+      <div class="src-matrix">
+        {% for pl in past_principals %}
+        <div class="src-matrix-card">
+          {% if pl.photo %}
+            {% if pl.photo.startswith('http') %}
+              <img src="{{ pl.photo }}" alt="{{ pl.name }}" class="src-matrix-photo">
+            {% else %}
+              <img src="{{ url_for('static', filename='uploads/' + pl.photo) }}"
+                   alt="{{ pl.name }}" class="src-matrix-photo">
+            {% endif %}
+          {% else %}
+            <div class="src-matrix-photo src-matrix-fallback">{{ pl.name[0]|upper }}</div>
+          {% endif %}
+          <h4 class="src-matrix-name">{{ pl.name }}</h4>
+          <p class="src-matrix-role">{{ pl.years }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ POLLS & SURVEYS ============ -->
+  <section class="src-section">
+    <div class="src-section-head">
+      <span class="src-section-eyebrow">Voice Your Opinion</span>
+      <h2 class="src-section-title">Polls &amp; Surveys</h2>
+    </div>
+
+    {% if year_status == 'Completed' %}
+    <div class="src-polls-locked">
+      🎓 Your year group is marked <strong>Completed</strong>.
+      You can view polls but voting is closed.
+    </div>
+    {% endif %}
+
+    <div class="text-center">
+      <a href="{{ url_for('polls_page') }}" class="src-polls-btn">
+        📊 View Polls &amp; Surveys
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ CHAT TILES ============ -->
+  <section class="src-section">
+    <div class="src-section-head">
+      <span class="src-section-eyebrow">Stay Connected</span>
+      <h2 class="src-section-title">Group Chats</h2>
+    </div>
+
+    <div class="src-chat-grid">
+      <a href="#" class="src-chat-tile" onclick="alert('Year Group Chat — coming soon');return false;">
+        <div class="src-chat-icon">💬</div>
+        <div class="src-chat-text">
+          <h4>Year Group Chat</h4>
+          <p>Chat with your classmates</p>
+        </div>
+      </a>
+
+      <a href="#" class="src-chat-tile" onclick="alert('Entire SRC Chat — coming soon');return false;">
+        <div class="src-chat-icon">🗨️</div>
+        <div class="src-chat-text">
+          <h4>Entire SRC Chat</h4>
+          <p>All students together</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  function openProfileDrawer() {
+    document.getElementById('srcDrawer').classList.add('open');
+    document.getElementById('srcDrawerBackdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeProfileDrawer() {
+    document.getElementById('srcDrawer').classList.remove('open');
+    document.getElementById('srcDrawerBackdrop').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function toggleEdit() {
+    const view = document.getElementById('srcInfoView');
+    const edit = document.getElementById('srcEditForm');
+    const comp = document.getElementById('srcComplaintForm');
+    const showing = edit.style.display === 'block';
+    edit.style.display = showing ? 'none' : 'block';
+    view.style.display = showing ? 'block' : 'none';
+    comp.style.display = 'none';
+  }
+
+  function toggleComplaint() {
+    const view = document.getElementById('srcInfoView');
+    const edit = document.getElementById('srcEditForm');
+    const comp = document.getElementById('srcComplaintForm');
+    const showing = comp.style.display === 'block';
+    comp.style.display = showing ? 'none' : 'block';
+    view.style.display = showing ? 'block' : 'none';
+    edit.style.display = 'none';
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeProfileDrawer();
+  });
+</script>
+
+{% endblock %}

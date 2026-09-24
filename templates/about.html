@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}About — {{ about_title }}{% endblock %}
+
+{% block content %}
+
+<!-- ============ HERO ============ -->
+<section class="about-hero">
+  <div class="about-hero-inner">
+    <span class="about-hero-eyebrow">About the College</span>
+    <h1 class="about-hero-title">{{ about_title }}</h1>
+    <p class="about-hero-tagline">{{ about_tagline }}</p>
+  </div>
+</section>
+
+<!-- ============ HISTORY ============ -->
+<section class="container about-history-wrap">
+  <div class="about-history-card">
+    <div class="about-history-head">
+      <span class="about-history-icon">📖</span>
+      <div>
+        <span class="about-history-eyebrow">Our Story</span>
+        <h2 class="about-history-title">A Brief History of the School</h2>
+      </div>
+    </div>
+
+    <div class="about-history-body">
+      {% for para in about_paragraphs %}
+      <p>{{ para }}</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS (colorful grid) ============ -->
+<section class="container about-stats-wrap">
+  <div class="about-stats-head">
+    <span class="about-section-eyebrow">At a Glance</span>
+    <h2 class="about-section-title">Key Milestones</h2>
+  </div>
+
+  <div class="about-stats-grid">
+    {% set stat_colors = ['about-stat-teal', 'about-stat-coral', 'about-stat-gold', 'about-stat-purple'] %}
+    {% for stat in about_stats %}
+    <div class="about-stat-card {{ stat_colors[loop.index0 % 4] }}">
+      <div class="about-stat-value">{{ stat.value }}</div>
+      <div class="about-stat-label">{{ stat.label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ============ PEOPLE (grid, 2 col on mobile) ============ -->
+{% if about_people %}
+<section class="container about-people-wrap">
+  <div class="about-people-head">
+    <span class="about-section-eyebrow">Founders &amp; Leadership</span>
+    <h2 class="about-section-title">The People Behind the Vision</h2>
+  </div>
+
+  <div class="about-people-grid">
+    {% for p in about_people %}
+    <div class="about-person-card">
+      <div class="about-person-avatar">{{ p.icon }}</div>
+      <div class="about-person-info">
+        <h4 class="about-person-name">{{ p.name }}</h4>
+        {% if p.role %}<p class="about-person-role">{{ p.role }}</p>{% endif %}
+        {% if p.note %}<p class="about-person-note">{{ p.note }}</p>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- ============ CTA ============ -->
+<section class="container about-cta-wrap">
+  <div class="about-cta-card">
+    <div class="about-cta-glow"></div>
+    <div class="about-cta-content">
+      <h2 class="about-cta-title">Join the GNMTC Family</h2>
+      <p class="about-cta-text">
+        Whether you're a prospective student, alumni, or visitor — you're part of
+        the story we're still writing.
+      </p>
+      <a href="{{ url_for('guest') }}" class="about-cta-btn">
+        Explore as Guest →
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

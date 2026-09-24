@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Events</h1>
+{% if current_user.is_authenticated and current_user.is_admin %}
+<a href="{{ url_for('new_event') }}" class="btn btn-primary btn-sm mb-3">+ New Event</a>
+{% endif %}
+<div class="list-group">
+  {% for e in events %}
+  <div class="list-group-item">
+    <h5>{{ e.title }}</h5>
+    <p class="mb-1">{{ e.description }}</p>
+    <small class="text-muted">📅 {{ e.event_date.strftime('%b %d, %Y %H:%M') }} | 📍 {{ e.location }}</small>
+  </div>
+  {% else %}
+  <p class="text-muted">No events yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,1182 @@
+{% extends 'base_bare.html' %}
+{% block title %}Super Admin — GNMTC SRC{% endblock %}
+
+{% block content %}
+
+<!-- ============ FLASH MESSAGES ============ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="bare-flash-wrap">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="admin-page">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="admin-topbar">
+    <img src="{{ url_for('static', filename='uploads/logo.png') }}"
+         alt="GNMTC SRC"
+         class="admin-topbar-logo"
+         onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+    <div class="admin-topbar-logo admin-topbar-fallback" style="display:none;">🩺</div>
+
+    <h1 class="admin-title">Super Admin</h1>
+
+    <a href="{{ url_for('super_admin_logout') }}" class="admin-logout-btn">Logout</a>
+  </div>
+
+  <!-- ============ STATS ============ -->
+  <div class="admin-stats">
+    <div class="admin-stat"><div class="admin-stat-v">{{ stats.students }}</div><div class="admin-stat-l">Students</div></div>
+    <div class="admin-stat"><div class="admin-stat-v">{{ stats.members }}</div><div class="admin-stat-l">Members</div></div>
+    <div class="admin-stat"><div class="admin-stat-v">{{ stats.events }}</div><div class="admin-stat-l">Events</div></div>
+    <div class="admin-stat"><div class="admin-stat-v">{{ stats.news }}</div><div class="admin-stat-l">News</div></div>
+  </div>
+
+  <!-- ============ SEARCH ============ -->
+  <form method="GET" action="{{ url_for('super_admin') }}" class="admin-search-form">
+    <input type="text" name="q" value="{{ search_q }}"
+           class="admin-search-input"
+           placeholder="🔍 Search student by name, ID, or phone…">
+    <button type="submit" class="admin-search-btn">Search</button>
+    {% if search_q %}
+    <a href="{{ url_for('super_admin') }}" class="admin-search-clear">✕ Clear</a>
+    {% endif %}
+  </form>
+
+  <!-- ============ SEARCH RESULTS ============ -->
+  {% if search_q %}
+  <div class="admin-section">
+    <h2 class="admin-section-title">Search Results ({{ students|length }})</h2>
+    {% if students %}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th><th>ID</th><th>Gender</th><th>Year</th><th>Phone</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td>{{ s.name }}</td>
+            <td><code>{{ s.student_id }}</code></td>
+            <td>{{ s.gender or '—' }}</td>
+            <td>{{ s.year_group or '—' }} ({{ s.year_status() }})</td>
+            <td>{{ s.phone or '—' }}</td>
+            <td><span class="admin-badge admin-badge-{{ s.status|lower }}">{{ s.status }}</span></td>
+            <td>
+              <button type="button" class="admin-icon-btn"
+                      onclick="openStudentEdit({{ s.id }})">✏️ Edit</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="admin-empty">No students matched your search.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ============ 3x3 MENU ============ -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">Manage</h2>
+
+    <div class="admin-menu-grid">
+      <button type="button" class="admin-tile" onclick="showTab('home')">
+        <div class="admin-tile-icon" style="background: #fdeceb;">🏠</div>
+        <h3>Home Page</h3>
+        <p>Title, cards</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('about')">
+        <div class="admin-tile-icon" style="background: #e6f5ef;">📖</div>
+        <h3>About Page</h3>
+        <p>History, milestones</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('guest')">
+        <div class="admin-tile-icon" style="background: #e7f2f4;">🌐</div>
+        <h3>Guest Page</h3>
+        <p>Leaders, gallery</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('students')">
+        <div class="admin-tile-icon" style="background: #fef3c7;">🎓</div>
+        <h3>Students</h3>
+        <p>Table, edit, delete</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('years')">
+        <div class="admin-tile-icon" style="background: #ede9fe;">📅</div>
+        <h3>Year Groups</h3>
+        <p>Codes, Active/Completed</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('announcements')">
+        <div class="admin-tile-icon" style="background: #dbeafe;">📣</div>
+        <h3>Announcements</h3>
+        <p>Files & posts</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('polls')">
+        <div class="admin-tile-icon" style="background: #fce7f3;">📊</div>
+        <h3>Polls</h3>
+        <p>Create, manage</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('requests')">
+        <div class="admin-tile-icon" style="background: #fee2e2;">🔔</div>
+        <h3>Requests</h3>
+        <p>Notifications</p>
+      </button>
+
+      <button type="button" class="admin-tile" onclick="showTab('src')">
+        <div class="admin-tile-icon" style="background: #e0e7ff;">💬</div>
+        <h3>SRC Content</h3>
+        <p>Executives, archives</p>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: HOME -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-home" style="display:none;">
+    <h2 class="admin-panel-title">Edit Home Page</h2>
+
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="action" value="save_title">
+      <div class="admin-field">
+        <label class="admin-label">Home Title</label>
+        <input type="text" name="home_title" class="admin-input" value="{{ home_title }}">
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Home Subtitle</label>
+        <input type="text" name="home_subtitle" class="admin-input" value="{{ home_subtitle }}">
+      </div>
+      <button class="admin-save-btn">Save Title</button>
+    </form>
+
+    <h3 class="admin-sub-title">Content Cards ({{ home_cards|length }})</h3>
+    {% for card in home_cards %}
+    <details class="admin-details">
+      <summary>
+        <span class="admin-details-title">
+          <strong>{{ card.eyebrow or 'Card' }}</strong> — {{ card.title or '(untitled)' }}
+        </span>
+      </summary>
+      <form method="POST" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="action" value="update_card">
+        <input type="hidden" name="card_id" value="{{ card.id }}">
+        <div class="admin-row">
+          <div class="admin-field">
+            <label class="admin-label">Eyebrow</label>
+            <input type="text" name="eyebrow" class="admin-input" value="{{ card.eyebrow or '' }}">
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Title</label>
+            <input type="text" name="title" class="admin-input" value="{{ card.title or '' }}">
+          </div>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Description</label>
+          <textarea name="description" class="admin-input" rows="3">{{ card.description or '' }}</textarea>
+        </div>
+        <div class="admin-row">
+          <div class="admin-field">
+            <label class="admin-label">Image URL</label>
+            <input type="text" name="image_url" class="admin-input"
+                   value="{{ card.image if card.image and card.image.startswith('http') else '' }}">
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">…or Upload</label>
+            <input type="file" name="image" class="admin-input" accept="image/*">
+          </div>
+        </div>
+        <button class="admin-save-btn">Save Card</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Delete this card?');">
+        <input type="hidden" name="action" value="delete_card">
+        <input type="hidden" name="card_id" value="{{ card.id }}">
+        <button class="admin-delete-btn">🗑️ Delete Card</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 class="admin-sub-title">Add New Card</h3>
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="add_card">
+      <div class="admin-row">
+        <div class="admin-field">
+          <label class="admin-label">Eyebrow</label>
+          <input type="text" name="eyebrow" class="admin-input">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Title</label>
+          <input type="text" name="title" class="admin-input" required>
+        </div>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Description</label>
+        <textarea name="description" class="admin-input" rows="3"></textarea>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Image</label>
+        <input type="file" name="image" class="admin-input" accept="image/*">
+      </div>
+      <button class="admin-save-btn">Add Card</button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: ABOUT -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-about" style="display:none;">
+    <h2 class="admin-panel-title">Edit About Page</h2>
+
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="action" value="save_about_text">
+      <div class="admin-field">
+        <label class="admin-label">Title</label>
+        <input type="text" name="about_title" class="admin-input" value="{{ about_title }}">
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Tagline</label>
+        <input type="text" name="about_tagline" class="admin-input" value="{{ about_tagline }}">
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">History (blank line = new paragraph)</label>
+        <textarea name="about_history" class="admin-input" rows="10">{{ about_history }}</textarea>
+      </div>
+      <button class="admin-save-btn">Save About</button>
+    </form>
+
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="action" value="save_footer_about">
+      <h3 class="admin-sub-title">Footer About Blurb</h3>
+      <div class="admin-field">
+        <textarea name="footer_about" class="admin-input" rows="3">{{ footer_about }}</textarea>
+      </div>
+      <button class="admin-save-btn">Save Footer</button>
+    </form>
+
+    <h3 class="admin-sub-title">Founders / Leaders ({{ about_people|length }})</h3>
+    {% for p in about_people %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title">{{ p.icon }} <strong>{{ p.name }}</strong></span></summary>
+      <form method="POST" class="admin-form">
+        <input type="hidden" name="action" value="update_about_person">
+        <input type="hidden" name="person_id" value="{{ p.id }}">
+        <div class="admin-row">
+          <div class="admin-field">
+            <label class="admin-label">Icon</label>
+            <input type="text" name="icon" class="admin-input" value="{{ p.icon }}" maxlength="4">
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Name</label>
+            <input type="text" name="name" class="admin-input" value="{{ p.name }}" required>
+          </div>
+          <div class="admin-field">
+            <label class="admin-label">Role</label>
+            <input type="text" name="role" class="admin-input" value="{{ p.role or '' }}">
+          </div>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Note</label>
+          <textarea name="note" class="admin-input" rows="2">{{ p.note or '' }}</textarea>
+        </div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Remove?');">
+        <input type="hidden" name="action" value="delete_about_person">
+        <input type="hidden" name="person_id" value="{{ p.id }}">
+        <button class="admin-delete-btn">🗑️ Remove</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 class="admin-sub-title">Add Person</h3>
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="action" value="add_about_person">
+      <div class="admin-row">
+        <div class="admin-field">
+          <label class="admin-label">Icon</label>
+          <input type="text" name="icon" class="admin-input" value="🎓" maxlength="4">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Name</label>
+          <input type="text" name="name" class="admin-input" required>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Role</label>
+          <input type="text" name="role" class="admin-input">
+        </div>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Note</label>
+        <textarea name="note" class="admin-input" rows="2"></textarea>
+      </div>
+      <button class="admin-save-btn">Add Person</button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: GUEST -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-guest" style="display:none;">
+    <h2 class="admin-panel-title">Edit Guest Page</h2>
+
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="save_guest_hero">
+      <h3 class="admin-sub-title">President & Principal</h3>
+      <div class="admin-row">
+        <div class="admin-field">
+          <label class="admin-label">President Name</label>
+          <input type="text" name="guest_president_name" class="admin-input" value="{{ guest_settings.president_name }}">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">President Title</label>
+          <input type="text" name="guest_president_title" class="admin-input" value="{{ guest_settings.president_title }}">
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field">
+          <label class="admin-label">President Photo URL</label>
+          <input type="text" name="president_photo_url" class="admin-input"
+                 value="{{ guest_settings.president_photo if guest_settings.president_photo.startswith('http') else '' }}">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">…or Upload</label>
+          <input type="file" name="president_photo" class="admin-input" accept="image/*">
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field">
+          <label class="admin-label">Principal Name</label>
+          <input type="text" name="guest_principal_name" class="admin-input" value="{{ guest_settings.principal_name }}">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Principal Title</label>
+          <input type="text" name="guest_principal_title" class="admin-input" value="{{ guest_settings.principal_title }}">
+        </div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field">
+          <label class="admin-label">Principal Photo URL</label>
+          <input type="text" name="principal_photo_url" class="admin-input"
+                 value="{{ guest_settings.principal_photo if guest_settings.principal_photo.startswith('http') else '' }}">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">…or Upload</label>
+          <input type="file" name="principal_photo" class="admin-input" accept="image/*">
+        </div>
+      </div>
+      <button class="admin-save-btn">Save Leaders</button>
+    </form>
+
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="action" value="save_guest_about">
+      <h3 class="admin-sub-title">About / Aim / Ambition / Courses</h3>
+      <div class="admin-field">
+        <label class="admin-label">About</label>
+        <textarea name="guest_about" class="admin-input" rows="3">{{ guest_settings.about }}</textarea>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Aim</label>
+        <textarea name="guest_aim" class="admin-input" rows="2">{{ guest_settings.aim }}</textarea>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Ambition</label>
+        <textarea name="guest_ambition" class="admin-input" rows="2">{{ guest_settings.ambition }}</textarea>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Courses (one per line)</label>
+        <textarea name="guest_courses" class="admin-input" rows="5">{{ guest_settings.courses }}</textarea>
+      </div>
+      <button class="admin-save-btn">Save</button>
+    </form>
+
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="action" value="save_guest_contact">
+      <h3 class="admin-sub-title">Contact</h3>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Location</label>
+          <input type="text" name="guest_location" class="admin-input" value="{{ guest_settings.location }}"></div>
+        <div class="admin-field"><label class="admin-label">Email</label>
+          <input type="text" name="guest_email" class="admin-input" value="{{ guest_settings.email }}"></div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Website</label>
+          <input type="text" name="guest_website" class="admin-input" value="{{ guest_settings.website }}"></div>
+        <div class="admin-field"><label class="admin-label">Phone</label>
+          <input type="text" name="guest_phone" class="admin-input" value="{{ guest_settings.phone }}"></div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">WhatsApp</label>
+          <input type="text" name="guest_whatsapp" class="admin-input" value="{{ guest_settings.whatsapp }}"></div>
+        <div class="admin-field"><label class="admin-label">Gallery Heading</label>
+          <input type="text" name="guest_gallery_heading" class="admin-input" value="{{ guest_settings.gallery_heading }}"></div>
+      </div>
+      <button class="admin-save-btn">Save Contact</button>
+    </form>
+
+    <h3 class="admin-sub-title">Administration ({{ guest_admins|length }})</h3>
+    {% for a in guest_admins %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title"><strong>{{ a.name }}</strong> — {{ a.role or '' }}</span></summary>
+      <form method="POST" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="action" value="update_guest_admin">
+        <input type="hidden" name="admin_id" value="{{ a.id }}">
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Name</label>
+            <input type="text" name="name" class="admin-input" value="{{ a.name }}" required></div>
+          <div class="admin-field"><label class="admin-label">Role</label>
+            <input type="text" name="role" class="admin-input" value="{{ a.role or '' }}"></div>
+        </div>
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Photo URL</label>
+            <input type="text" name="photo_url" class="admin-input"></div>
+          <div class="admin-field"><label class="admin-label">…or Upload</label>
+            <input type="file" name="photo" class="admin-input" accept="image/*"></div>
+        </div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Remove?');">
+        <input type="hidden" name="action" value="delete_guest_admin">
+        <input type="hidden" name="admin_id" value="{{ a.id }}">
+        <button class="admin-delete-btn">🗑️ Remove</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="add_guest_admin">
+      <h4 class="admin-sub-title">Add Administrator</h4>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Name</label>
+          <input type="text" name="name" class="admin-input" required></div>
+        <div class="admin-field"><label class="admin-label">Role</label>
+          <input type="text" name="role" class="admin-input"></div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Photo URL</label>
+          <input type="text" name="photo_url" class="admin-input"></div>
+        <div class="admin-field"><label class="admin-label">…or Upload</label>
+          <input type="file" name="photo" class="admin-input" accept="image/*"></div>
+      </div>
+      <button class="admin-save-btn">Add</button>
+    </form>
+
+    <h3 class="admin-sub-title">Gallery ({{ gallery_images|length }})</h3>
+    {% for g in gallery_images %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title">{{ g.caption or '(no caption)' }}</span></summary>
+      <form method="POST" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="action" value="update_gallery_image">
+        <input type="hidden" name="image_id" value="{{ g.id }}">
+        <div class="admin-field">
+          <label class="admin-label">Caption</label>
+          <input type="text" name="caption" class="admin-input" value="{{ g.caption or '' }}">
+        </div>
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Image URL</label>
+            <input type="text" name="image_url" class="admin-input"
+                   value="{{ g.image if g.image.startswith('http') else '' }}"></div>
+          <div class="admin-field"><label class="admin-label">…or Upload</label>
+            <input type="file" name="image" class="admin-input" accept="image/*"></div>
+        </div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Delete?');">
+        <input type="hidden" name="action" value="delete_gallery_image">
+        <input type="hidden" name="image_id" value="{{ g.id }}">
+        <button class="admin-delete-btn">🗑️ Delete</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="add_gallery_image">
+      <h4 class="admin-sub-title">Add Gallery Image</h4>
+      <div class="admin-field"><label class="admin-label">Caption</label>
+        <input type="text" name="caption" class="admin-input"></div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Image URL</label>
+          <input type="text" name="image_url" class="admin-input"></div>
+        <div class="admin-field"><label class="admin-label">…or Upload</label>
+          <input type="file" name="image" class="admin-input" accept="image/*"></div>
+      </div>
+      <button class="admin-save-btn">Add Image</button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: STUDENTS -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-students" style="display:none;">
+    <h2 class="admin-panel-title">All Students</h2>
+
+    {% if not search_q %}
+    <p class="admin-hint">Use the search bar above to find a specific student, or browse the list below.</p>
+    {% endif %}
+
+    {% set all_students = students if search_q else [] %}
+    {% if not search_q %}
+    <script>
+      // Populated by Jinja via separate section below
+    </script>
+    {% endif %}
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th><th>ID</th><th>Gender</th><th>DOB</th>
+            <th>Phone</th><th>Course</th><th>Year</th><th>Level</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in (students if search_q else all_students_list) %}
+          <tr>
+            <td>{{ s.name }}</td>
+            <td><code>{{ s.student_id }}</code></td>
+            <td>{{ s.gender or '—' }}</td>
+            <td>{{ s.dob or '—' }}</td>
+            <td>{{ s.phone or '—' }}</td>
+            <td>{{ s.course or '—' }}</td>
+            <td>{{ s.year_group or '—' }} ({{ s.year_status() }})</td>
+            <td>{{ s.level or '—' }}</td>
+            <td><span class="admin-badge admin-badge-{{ s.status|lower }}">{{ s.status }}</span></td>
+            <td>
+              <button type="button" class="admin-icon-btn"
+                      onclick="openStudentEdit({{ s.id }})">✏️</button>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="10" class="admin-empty">No students yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: YEAR GROUPS -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-years" style="display:none;">
+    <h2 class="admin-panel-title">Year Groups</h2>
+    <p class="admin-hint">Each year has a shared password (code) that students must enter at signup.</p>
+
+    {% for yg in year_groups %}
+    <details class="admin-details">
+      <summary>
+        <span class="admin-details-title">
+          <strong>{{ yg.year }}</strong> — Code: <code>{{ yg.code }}</code>
+          <span class="admin-badge admin-badge-{{ yg.status|lower }}">{{ yg.status }}</span>
+        </span>
+      </summary>
+
+      <form method="POST" class="admin-form">
+        <input type="hidden" name="action" value="update_year_group">
+        <input type="hidden" name="year_id" value="{{ yg.id }}">
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Year</label>
+            <input type="text" name="year" class="admin-input" value="{{ yg.year }}"></div>
+          <div class="admin-field"><label class="admin-label">Code</label>
+            <input type="text" name="code" class="admin-input" value="{{ yg.code }}"></div>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Status (click one — the other unchecks)</label>
+          <div class="admin-radio-row">
+            <label class="admin-radio">
+              <input type="radio" name="status" value="Active"
+                     {% if yg.status == 'Active' %}checked{% endif %}> Active
+            </label>
+            <label class="admin-radio">
+              <input type="radio" name="status" value="Completed"
+                     {% if yg.status == 'Completed' %}checked{% endif %}> Completed
+            </label>
+          </div>
+        </div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+
+      <form method="POST" onsubmit="return confirm('Delete this year group?');">
+        <input type="hidden" name="action" value="delete_year_group">
+        <input type="hidden" name="year_id" value="{{ yg.id }}">
+        <button class="admin-delete-btn">🗑️ Delete Year Group</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 class="admin-sub-title">Add Year Group</h3>
+    <form method="POST" class="admin-form">
+      <input type="hidden" name="action" value="add_year_group">
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Year</label>
+          <input type="text" name="year" class="admin-input" placeholder="e.g. 2030" required></div>
+        <div class="admin-field"><label class="admin-label">Code</label>
+          <input type="text" name="code" class="admin-input" placeholder="e.g. 0130" required></div>
+      </div>
+      <div class="admin-field">
+        <label class="admin-label">Status</label>
+        <div class="admin-radio-row">
+          <label class="admin-radio"><input type="radio" name="status" value="Active" checked> Active</label>
+          <label class="admin-radio"><input type="radio" name="status" value="Completed"> Completed</label>
+        </div>
+      </div>
+      <button class="admin-save-btn">Add Year Group</button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: ANNOUNCEMENTS -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-announcements" style="display:none;">
+    <h2 class="admin-panel-title">Announcements</h2>
+
+    {% for a in announcements %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title">
+        <strong>{{ a.title }}</strong> — {{ a.category }}
+      </span></summary>
+      <form method="POST" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="action" value="update_announcement">
+        <input type="hidden" name="announcement_id" value="{{ a.id }}">
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Title</label>
+            <input type="text" name="title" class="admin-input" value="{{ a.title }}" required></div>
+          <div class="admin-field"><label class="admin-label">Category</label>
+            <select name="category" class="admin-input">
+              {% for c in ['General', 'Urgent', 'Event', 'Notice'] %}
+              <option {% if a.category == c %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Body</label>
+          <textarea name="body" class="admin-input" rows="4">{{ a.body }}</textarea>
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Replace File (PDF / DOCX / TXT)</label>
+          <input type="file" name="file" class="admin-input">
+        </div>
+        <div class="admin-checkbox">
+          <input type="checkbox" name="is_pinned" id="pin-{{ a.id }}"
+                 {% if a.is_pinned %}checked{% endif %}>
+          <label for="pin-{{ a.id }}">📌 Pin to top</label>
+        </div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Delete?');">
+        <input type="hidden" name="action" value="delete_announcement">
+        <input type="hidden" name="announcement_id" value="{{ a.id }}">
+        <button class="admin-delete-btn">🗑️ Delete</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 class="admin-sub-title">Post New Announcement</h3>
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="add_announcement">
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Title</label>
+          <input type="text" name="title" class="admin-input" required></div>
+        <div class="admin-field"><label class="admin-label">Category</label>
+          <select name="category" class="admin-input">
+            <option>General</option><option>Urgent</option>
+            <option>Event</option><option>Notice</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-field"><label class="admin-label">Body</label>
+        <textarea name="body" class="admin-input" rows="4" required></textarea></div>
+      <div class="admin-field"><label class="admin-label">File (optional — PDF, DOCX, TXT)</label>
+        <input type="file" name="file" class="admin-input"></div>
+      <div class="admin-checkbox">
+        <input type="checkbox" name="is_pinned" id="newPin">
+        <label for="newPin">📌 Pin to top</label>
+      </div>
+      <button class="admin-save-btn">Post Announcement</button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: POLLS -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-polls" style="display:none;">
+    <h2 class="admin-panel-title">Polls</h2>
+
+    {% for p in polls %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title">
+        <strong>{{ p.question }}</strong> —
+        {{ p.total_votes }} votes —
+        <span class="admin-badge admin-badge-{{ 'active' if p.is_active else 'completed' }}">
+          {{ 'Active' if p.is_active else 'Closed' }}
+        </span>
+      </span></summary>
+
+      <div class="admin-poll-options">
+        {% for opt in p.options %}
+        <div class="admin-poll-opt">
+          <span>{{ opt.name }}</span>
+          <span>{{ opt.count }} votes · {{ opt.percent }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <form method="POST" class="admin-form">
+        <input type="hidden" name="action" value="toggle_poll">
+        <input type="hidden" name="poll_id" value="{{ p.id }}">
+        <button class="admin-save-btn">
+          {{ '🚫 Close Poll' if p.is_active else '▶️ Reopen Poll' }}
+        </button>
+      </form>
+
+      <form method="POST" onsubmit="return confirm('Delete this poll?');">
+        <input type="hidden" name="action" value="delete_poll">
+        <input type="hidden" name="poll_id" value="{{ p.id }}">
+        <button class="admin-delete-btn">🗑️ Delete Poll</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 class="admin-sub-title">Create New Poll</h3>
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="add_poll">
+      <div class="admin-field"><label class="admin-label">Question</label>
+        <input type="text" name="question" class="admin-input" required></div>
+      <div class="admin-field"><label class="admin-label">Description</label>
+        <input type="text" name="description" class="admin-input"></div>
+
+      <p class="admin-hint">Add up to 6 options below. Leave unused fields empty.</p>
+
+      {% for i in range(1, 7) %}
+      <div class="admin-row">
+        <div class="admin-field">
+          <label class="admin-label">Option {{ i }} — Name</label>
+          <input type="text" name="option_name" class="admin-input">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Photo URL</label>
+          <input type="text" name="option_image_url" class="admin-input">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">…or Upload</label>
+          <input type="file" name="option_image" class="admin-input" accept="image/*">
+        </div>
+      </div>
+      {% endfor %}
+
+      <div class="admin-checkbox">
+        <input type="checkbox" name="is_active" id="newPollActive" checked>
+        <label for="newPollActive">Poll is Active</label>
+      </div>
+
+      <button class="admin-save-btn">Create Poll</button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: REQUESTS & NOTIFICATIONS -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-requests" style="display:none;">
+    <h2 class="admin-panel-title">Requests & Notifications</h2>
+
+    <!-- Signup Requests -->
+    <h3 class="admin-sub-title">🟡 Signup Requests ({{ signup_requests|length }})</h3>
+    {% for r in signup_requests %}
+    <div class="admin-request-card">
+      <div class="admin-request-head">
+        <strong>{{ r.name }}</strong>
+        <span class="admin-badge admin-badge-{{ r.status }}">{{ r.status }}</span>
+      </div>
+      <p class="admin-request-meta">
+        ID: {{ r.student_id or '—' }} · Phone: {{ r.phone or '—' }} · Year: {{ r.year_group or '—' }}
+      </p>
+      {% if r.message %}<p class="admin-request-msg">{{ r.message }}</p>{% endif %}
+      <p class="admin-request-date">{{ r.created_at.strftime('%b %d, %Y · %H:%M') }}</p>
+      <div class="admin-request-actions">
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="action" value="resolve_signup_request">
+          <input type="hidden" name="request_id" value="{{ r.id }}">
+          <button class="admin-resolve-btn">✔️ Resolve</button>
+        </form>
+        <form method="POST" style="display:inline;" onsubmit="return confirm('Delete?');">
+          <input type="hidden" name="action" value="delete_signup_request">
+          <input type="hidden" name="request_id" value="{{ r.id }}">
+          <button class="admin-delete-btn">🗑️</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <p class="admin-empty">No signup requests.</p>
+    {% endfor %}
+
+    <!-- Recovery Requests -->
+    <h3 class="admin-sub-title">🟡 Recovery Requests ({{ recovery_requests|length }})</h3>
+    {% for r in recovery_requests %}
+    <div class="admin-request-card">
+      <div class="admin-request-head">
+        <strong>{{ r.name }}</strong>
+        <span class="admin-badge admin-badge-{{ r.status }}">{{ r.status }}</span>
+      </div>
+      <p class="admin-request-meta">
+        ID: {{ r.student_id or '—' }} · Phone: {{ r.phone or '—' }} · Year: {{ r.year_group or '—' }}
+      </p>
+      {% if r.message %}<p class="admin-request-msg">{{ r.message }}</p>{% endif %}
+      <p class="admin-request-date">{{ r.created_at.strftime('%b %d, %Y · %H:%M') }}</p>
+      <div class="admin-request-actions">
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="action" value="resolve_recovery_request">
+          <input type="hidden" name="request_id" value="{{ r.id }}">
+          <button class="admin-resolve-btn">✔️ Resolve</button>
+        </form>
+        <form method="POST" style="display:inline;" onsubmit="return confirm('Delete?');">
+          <input type="hidden" name="action" value="delete_recovery_request">
+          <input type="hidden" name="request_id" value="{{ r.id }}">
+          <button class="admin-delete-btn">🗑️</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <p class="admin-empty">No recovery requests.</p>
+    {% endfor %}
+
+    <!-- Complaints -->
+    <h3 class="admin-sub-title">🟠 Complaints ({{ complaints|length }})</h3>
+    {% for c in complaints %}
+    <div class="admin-request-card">
+      <div class="admin-request-head">
+        <strong>{{ c.student_name }}</strong>
+        <span class="admin-badge admin-badge-{{ c.status }}">{{ c.status }}</span>
+      </div>
+      <p class="admin-request-meta">
+        ID: {{ c.student_reg or '—' }} · Phone: {{ c.student_phone or '—' }}
+      </p>
+      {% if c.subject %}<p class="admin-request-msg"><strong>{{ c.subject }}</strong></p>{% endif %}
+      <p class="admin-request-msg">{{ c.message }}</p>
+      <p class="admin-request-date">{{ c.created_at.strftime('%b %d, %Y · %H:%M') }}</p>
+      <div class="admin-request-actions">
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="action" value="resolve_complaint">
+          <input type="hidden" name="complaint_id" value="{{ c.id }}">
+          <button class="admin-resolve-btn">✔️ Resolve</button>
+        </form>
+        <form method="POST" style="display:inline;" onsubmit="return confirm('Delete?');">
+          <input type="hidden" name="action" value="delete_complaint">
+          <input type="hidden" name="complaint_id" value="{{ c.id }}">
+          <button class="admin-delete-btn">🗑️</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <p class="admin-empty">No complaints.</p>
+    {% endfor %}
+
+    <!-- Poll Requests -->
+    <h3 class="admin-sub-title">🟣 Poll Agenda Requests ({{ poll_requests|length }})</h3>
+    {% for r in poll_requests %}
+    <div class="admin-request-card">
+      <div class="admin-request-head">
+        <strong>{{ r.student_name }}</strong>
+        <span class="admin-badge admin-badge-{{ r.status }}">{{ r.status }}</span>
+      </div>
+      <p class="admin-request-meta">
+        ID: {{ r.student_reg or '—' }} · Phone: {{ r.student_phone or '—' }}
+      </p>
+      <p class="admin-request-msg">{{ r.suggestion }}</p>
+      <p class="admin-request-date">{{ r.created_at.strftime('%b %d, %Y · %H:%M') }}</p>
+      <div class="admin-request-actions">
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="action" value="resolve_poll_request">
+          <input type="hidden" name="request_id" value="{{ r.id }}">
+          <button class="admin-resolve-btn">✔️ Approve</button>
+        </form>
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="action" value="decline_poll_request">
+          <input type="hidden" name="request_id" value="{{ r.id }}">
+          <button class="admin-decline-btn">✖️ Decline</button>
+        </form>
+        <form method="POST" style="display:inline;" onsubmit="return confirm('Delete?');">
+          <input type="hidden" name="action" value="delete_poll_request">
+          <input type="hidden" name="request_id" value="{{ r.id }}">
+          <button class="admin-delete-btn">🗑️</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <p class="admin-empty">No poll agenda requests.</p>
+    {% endfor %}
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB: SRC CONTENT -->
+  <!-- ============================================================ -->
+  <div class="admin-panel" id="tab-src" style="display:none;">
+    <h2 class="admin-panel-title">SRC Page Content</h2>
+
+    <h3 class="admin-sub-title">SRC Executives ({{ executives|length }})</h3>
+    {% for ex in executives %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title"><strong>{{ ex.name }}</strong> — {{ ex.position }}</span></summary>
+      <form method="POST" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="action" value="update_executive">
+        <input type="hidden" name="exec_id" value="{{ ex.id }}">
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Name</label>
+            <input type="text" name="name" class="admin-input" value="{{ ex.name }}" required></div>
+          <div class="admin-field"><label class="admin-label">Position</label>
+            <input type="text" name="position" class="admin-input" value="{{ ex.position }}" required></div>
+        </div>
+        <div class="admin-field"><label class="admin-label">Photo</label>
+          <input type="file" name="photo" class="admin-input" accept="image/*"></div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Remove?');">
+        <input type="hidden" name="action" value="delete_executive">
+        <input type="hidden" name="exec_id" value="{{ ex.id }}">
+        <button class="admin-delete-btn">🗑️ Remove</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="add_executive">
+      <h4 class="admin-sub-title">Add Executive</h4>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Name</label>
+          <input type="text" name="name" class="admin-input" required></div>
+        <div class="admin-field"><label class="admin-label">Position</label>
+          <input type="text" name="position" class="admin-input" required></div>
+      </div>
+      <div class="admin-field"><label class="admin-label">Photo</label>
+        <input type="file" name="photo" class="admin-input" accept="image/*"></div>
+      <button class="admin-save-btn">Add Executive</button>
+    </form>
+
+    <h3 class="admin-sub-title">Past Presidents ({{ past_presidents|length }})</h3>
+    {% for pl in past_presidents %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title"><strong>{{ pl.name }}</strong> — {{ pl.years }}</span></summary>
+      <form method="POST" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="action" value="update_past_leader">
+        <input type="hidden" name="leader_id" value="{{ pl.id }}">
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Name</label>
+            <input type="text" name="name" class="admin-input" value="{{ pl.name }}" required></div>
+          <div class="admin-field"><label class="admin-label">Years</label>
+            <input type="text" name="years" class="admin-input" value="{{ pl.years or '' }}"></div>
+        </div>
+        <div class="admin-field"><label class="admin-label">Role</label>
+          <select name="role" class="admin-input">
+            <option value="President" {% if pl.role == 'President' %}selected{% endif %}>President</option>
+            <option value="Principal" {% if pl.role == 'Principal' %}selected{% endif %}>Principal</option>
+          </select>
+        </div>
+        <div class="admin-field"><label class="admin-label">Photo</label>
+          <input type="file" name="photo" class="admin-input" accept="image/*"></div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Remove?');">
+        <input type="hidden" name="action" value="delete_past_leader">
+        <input type="hidden" name="leader_id" value="{{ pl.id }}">
+        <button class="admin-delete-btn">🗑️ Remove</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 class="admin-sub-title">Past Principals ({{ past_principals|length }})</h3>
+    {% for pl in past_principals %}
+    <details class="admin-details">
+      <summary><span class="admin-details-title"><strong>{{ pl.name }}</strong> — {{ pl.years }}</span></summary>
+      <form method="POST" enctype="multipart/form-data" class="admin-form">
+        <input type="hidden" name="action" value="update_past_leader">
+        <input type="hidden" name="leader_id" value="{{ pl.id }}">
+        <div class="admin-row">
+          <div class="admin-field"><label class="admin-label">Name</label>
+            <input type="text" name="name" class="admin-input" value="{{ pl.name }}" required></div>
+          <div class="admin-field"><label class="admin-label">Years</label>
+            <input type="text" name="years" class="admin-input" value="{{ pl.years or '' }}"></div>
+        </div>
+        <div class="admin-field"><label class="admin-label">Role</label>
+          <select name="role" class="admin-input">
+            <option value="President" {% if pl.role == 'President' %}selected{% endif %}>President</option>
+            <option value="Principal" {% if pl.role == 'Principal' %}selected{% endif %}>Principal</option>
+          </select>
+        </div>
+        <div class="admin-field"><label class="admin-label">Photo</label>
+          <input type="file" name="photo" class="admin-input" accept="image/*"></div>
+        <button class="admin-save-btn">Save</button>
+      </form>
+      <form method="POST" onsubmit="return confirm('Remove?');">
+        <input type="hidden" name="action" value="delete_past_leader">
+        <input type="hidden" name="leader_id" value="{{ pl.id }}">
+        <button class="admin-delete-btn">🗑️ Remove</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
+      <input type="hidden" name="action" value="add_past_leader">
+      <h4 class="admin-sub-title">Add Past Leader</h4>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Name</label>
+          <input type="text" name="name" class="admin-input" required></div>
+        <div class="admin-field"><label class="admin-label">Years</label>
+          <input type="text" name="years" class="admin-input"></div>
+      </div>
+      <div class="admin-field"><label class="admin-label">Role</label>
+        <select name="role" class="admin-input">
+          <option>President</option><option>Principal</option>
+        </select>
+      </div>
+      <div class="admin-field"><label class="admin-label">Photo</label>
+        <input type="file" name="photo" class="admin-input" accept="image/*"></div>
+      <button class="admin-save-btn">Add</button>
+    </form>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- STUDENT EDIT MODAL -->
+<!-- ============================================================ -->
+<div class="admin-modal-backdrop" id="studentModal" style="display:none;">
+  <div class="admin-modal">
+    <button type="button" class="admin-modal-close" onclick="closeStudentEdit()">✕</button>
+    <h3 class="admin-modal-title">Edit Student</h3>
+
+    <form method="POST" enctype="multipart/form-data" id="studentEditForm">
+      <input type="hidden" name="action" value="update_student">
+      <input type="hidden" name="student_db_id" id="sId">
+
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Name</label>
+          <input type="text" name="name" id="sName" class="admin-input"></div>
+        <div class="admin-field"><label class="admin-label">Student ID</label>
+          <input type="text" name="student_id" id="sSid" class="admin-input"></div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Gender</label>
+          <select name="gender" id="sGender" class="admin-input">
+            <option value="">—</option><option value="Male">Male</option><option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="admin-field"><label class="admin-label">DOB (YYYY-MM-DD)</label>
+          <input type="text" name="dob" id="sDob" class="admin-input"></div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Phone</label>
+          <input type="text" name="phone" id="sPhone" class="admin-input"></div>
+        <div class="admin-field"><label class="admin-label">Email</label>
+          <input type="text" name="email" id="sEmail" class="admin-input"></div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Course</label>
+          <input type="text" name="course" id="sCourse" class="admin-input"></div>
+        <div class="admin-field"><label class="admin-label">Year Group</label>
+          <input type="text" name="year_group" id="sYear" class="admin-input"></div>
+      </div>
+      <div class="admin-row">
+        <div class="admin-field"><label class="admin-label">Level</label>
+          <select name="level" id="sLevel" class="admin-input">
+            <option value="">—</option><option>100</option><option>200</option>
+            <option>300</option><option>400</option>
+          </select>
+        </div>
+        <div class="admin-field"><label class="admin-label">Status</label>
+          <select name="status" id="sStatus" class="admin-input">
+            <option>Active</option><option>Alumni</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-field"><label class="admin-label">Change Password (leave empty to keep)</label>
+        <input type="text" name="password" class="admin-input"></div>
+      <div class="admin-field"><label class="admin-label">Profile Picture</label>
+        <input type="file" name="profile_pic" class="admin-input" accept="image/*"></div>
+
+      <div class="admin-modal-actions">
+        <button type="submit" class="admin-save-btn">Save Changes</button>
+      </div>
+    </form>
+
+    <form method="POST" onsubmit="return confirm('Delete this student permanently?');">
+      <input type="hidden" name="action" value="delete_student">
+      <input type="hidden" name="student_db_id" id="sIdDel">
+      <button class="admin-delete-btn">🗑️ Delete Student</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ALL STUDENTS JSON (for modal) ============ -->
+<script>
+  const ALL_STUDENTS = {
+    {% for s in all_students_list %}
+    "{{ s.id }}": {
+      id: {{ s.id }},
+      name: {{ s.name|tojson }},
+      student_id: {{ s.student_id|tojson }},
+      gender: {{ (s.gender or '')|tojson }},
+      dob: {{ (s.dob or '')|tojson }},
+      phone: {{ (s.phone or '')|tojson }},
+      email: {{ (s.email or '')|tojson }},
+      course: {{ (s.course or '')|tojson }},
+      year_group: {{ (s.year_group or '')|tojson }},
+      level: {{ (s.level or '')|tojson }},
+      status: {{ (s.status or 'Active')|tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  function showTab(name) {
+    document.querySelectorAll('.admin-panel').forEach(function(p) {
+      p.style.display = 'none';
+    });
+    const tab = document.getElementById('tab-' + name);
+    if (tab) {
+      tab.style.display = 'block';
+      tab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function openStudentEdit(id) {
+    const s = ALL_STUDENTS[id];
+    if (!s) return;
+    document.getElementById('sId').value = s.id;
+    document.getElementById('sIdDel').value = s.id;
+    document.getElementById('sName').value = s.name;
+    document.getElementById('sSid').value = s.student_id;
+    document.getElementById('sGender').value = s.gender;
+    document.getElementById('sDob').value = s.dob;
+    document.getElementById('sPhone').value = s.phone;
+    document.getElementById('sEmail').value = s.email;
+    document.getElementById('sCourse').value = s.course;
+    document.getElementById('sYear').value = s.year_group;
+    document.getElementById('sLevel').value = s.level;
+    document.getElementById('sStatus').value = s.status;
+    document.getElementById('studentModal').style.display = 'flex';
+  }
+
+  function closeStudentEdit() {
+    document.getElementById('studentModal').style.display = 'none';
+  }
+
+  document.getElementById('studentModal').addEventListener('click', function(e) {
+    if (e.target === this) closeStudentEdit();
+  });
+</script>
+
+{% endblock %}

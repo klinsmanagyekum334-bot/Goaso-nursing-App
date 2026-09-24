@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>News & Updates</h1>
+{% if current_user.is_authenticated and current_user.is_admin %}
+<a href="{{ url_for('new_news') }}" class="btn btn-primary btn-sm mb-3">+ New Post</a>
+{% endif %}
+<div class="list-group">
+  {% for n in news %}
+  <a href="{{ url_for('news_detail', news_id=n.id) }}" class="list-group-item list-group-item-action">
+    <h5 class="mb-1">{{ n.title }}</h5>
+    <small class="text-muted">By {{ n.author }} — {{ n.posted_at.strftime('%b %d, %Y') }}</small>
+  </a>
+  {% else %}
+  <p class="text-muted">No news yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

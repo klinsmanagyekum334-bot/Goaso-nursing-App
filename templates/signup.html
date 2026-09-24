@@ -1,0 +1,311 @@
+{% extends 'base_bare.html' %}
+{% block title %}Sign Up — GNMTC SRC{% endblock %}
+
+{% block content %}
+
+<!-- ============ FLASH MESSAGES ============ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="bare-flash-wrap">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ============ SIGNUP PAGE ============ -->
+<div class="signup-page">
+
+  <div class="signup-header">
+    <a href="{{ url_for('member_login') }}" class="signup-back">← Back to Login</a>
+
+    <div class="signup-header-icon">
+      <img src="{{ url_for('static', filename='uploads/logo.png') }}"
+           alt="GNMTC SRC"
+           onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <span class="signup-header-fallback" style="display:none;">🎓</span>
+    </div>
+
+    <h1 class="signup-title">Create Account</h1>
+    <p class="signup-sub">Fill in your details to join the SRC Portal</p>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" class="signup-card" novalidate>
+
+    <!-- Full name -->
+    <div class="signup-field">
+      <label class="signup-label">Full Name <span class="signup-req">*</span></label>
+      <input type="text" name="name" class="signup-input"
+             value="{{ form.get('name', '') }}"
+             placeholder="e.g. Kofi Nkansah" required>
+    </div>
+
+    <!-- Gender -->
+    <div class="signup-field">
+      <label class="signup-label">Gender <span class="signup-req">*</span></label>
+      <div class="signup-radio-row">
+        <label class="signup-radio">
+          <input type="radio" name="gender" value="Male"
+                 {% if form.get('gender') == 'Male' %}checked{% endif %} required>
+          <span>♂️ Male</span>
+        </label>
+        <label class="signup-radio">
+          <input type="radio" name="gender" value="Female"
+                 {% if form.get('gender') == 'Female' %}checked{% endif %} required>
+          <span>♀️ Female</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ID or Phone -->
+    <div class="signup-field">
+      <label class="signup-label">
+        ID Number <span class="signup-req">*</span>
+      </label>
+      <input type="text" name="student_id" class="signup-input"
+             value="{{ form.get('student_id', '') }}"
+             placeholder="Enter your ID (or your phone number if you don't have an ID)" required>
+      <small class="signup-hint">
+        💡 If you don't have your school ID yet, enter your phone number instead.
+        This will be your login credential and cannot be changed without admin.
+      </small>
+    </div>
+
+    <!-- Password -->
+    <div class="signup-row">
+      <div class="signup-field">
+        <label class="signup-label">Password <span class="signup-req">*</span></label>
+        <input type="password" name="password" class="signup-input"
+               placeholder="Min 6 characters" required minlength="6">
+      </div>
+      <div class="signup-field">
+        <label class="signup-label">Confirm Password <span class="signup-req">*</span></label>
+        <input type="password" name="confirm_password" class="signup-input"
+               placeholder="Repeat password" required minlength="6">
+      </div>
+    </div>
+
+    <!-- Phone -->
+    <div class="signup-field">
+      <label class="signup-label">Phone Number <span class="signup-req">*</span></label>
+      <input type="text" name="phone" class="signup-input"
+             value="{{ form.get('phone', '') }}"
+             placeholder="e.g. 0244123456" required>
+    </div>
+
+    <!-- Course -->
+    <div class="signup-field">
+      <label class="signup-label">Course <span class="signup-req">*</span></label>
+      <input type="text" name="course" class="signup-input"
+             value="{{ form.get('course', '') }}"
+             placeholder="e.g. Registered Midwifery" required>
+    </div>
+
+    <!-- DOB — 3 dropdowns -->
+    <div class="signup-field">
+      <label class="signup-label">Date of Birth <span class="signup-req">*</span></label>
+      <div class="signup-row signup-row-3">
+        <select name="dob_day" class="signup-input" required>
+          <option value="">Day</option>
+          {% for d in range(1, 32) %}
+          <option value="{{ d }}" {% if form.get('dob_day') == d|string %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="dob_month" class="signup-input" required>
+          <option value="">Month</option>
+          {% for m in ['January','February','March','April','May','June','July','August','September','October','November','December'] %}
+          <option value="{{ loop.index }}"
+                  {% if form.get('dob_month') == loop.index|string %}selected{% endif %}>
+            {{ m }}
+          </option>
+          {% endfor %}
+        </select>
+
+        <select name="dob_year" class="signup-input" required>
+          <option value="">Year</option>
+          {% for y in dob_years %}
+          <option value="{{ y }}" {% if form.get('dob_year') == y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Year of Completion -->
+    <div class="signup-field">
+      <label class="signup-label">Year of Completion <span class="signup-req">*</span></label>
+      <select name="year_group" class="signup-input" required>
+        <option value="">Select year of completion</option>
+        {% for y in year_options %}
+        <option value="{{ y }}" {% if form.get('year_group') == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+      <small class="signup-hint">
+        💡 This is the year you will (or did) complete your studies — not the year you joined.
+      </small>
+    </div>
+
+    <!-- Level -->
+    <div class="signup-field">
+      <label class="signup-label">Level (for Active students only)</label>
+      <select name="level" class="signup-input">
+        <option value="">Select your level</option>
+        {% for lv in ['100', '200', '300', '400'] %}
+        <option value="{{ lv }}" {% if form.get('level') == lv %}selected{% endif %}>Level {{ lv }}</option>
+        {% endfor %}
+      </select>
+      <small class="signup-hint">
+        💡 Past students (Completed) can leave this empty.
+      </small>
+    </div>
+
+    <!-- Profile picture -->
+    <div class="signup-field">
+      <label class="signup-label">Profile Picture (optional)</label>
+      <input type="file" name="profile_pic" class="signup-input" accept="image/*">
+    </div>
+
+    <!-- Year group password -->
+    <div class="signup-field">
+      <label class="signup-label">Year Group Password <span class="signup-req">*</span></label>
+      <input type="text" name="year_code" class="signup-input"
+             placeholder="Enter the code given by administration" required>
+      <small class="signup-hint">
+        💡 Your year group has a password shared by the admin. If you don't have it, click "Send Request" below.
+      </small>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="signup-submit">Create Account →</button>
+
+    <!-- Divider -->
+    <div class="signup-divider"><span>or</span></div>
+
+    <!-- Send request toggle -->
+    <button type="button" class="signup-request-toggle" onclick="toggleRequestForm()">
+      📩 Send Request to Admin
+    </button>
+
+    <!-- Hidden request form -->
+    <div class="signup-request-box" id="requestBox" style="display:none;">
+      <p class="signup-request-intro">
+        If your year group password is wrong or you can't complete signup,
+        send a request to administration. Make sure your details below are correct.
+      </p>
+
+      <div class="signup-field">
+        <label class="signup-label">Full Name</label>
+        <input type="text" name="request_name" class="signup-input" placeholder="Your name">
+      </div>
+
+      <div class="signup-row">
+        <div class="signup-field">
+          <label class="signup-label">ID / Phone</label>
+          <input type="text" name="request_id" class="signup-input" placeholder="Your ID or phone">
+        </div>
+        <div class="signup-field">
+          <label class="signup-label">Phone</label>
+          <input type="text" name="request_phone" class="signup-input" placeholder="Your phone">
+        </div>
+      </div>
+
+      <div class="signup-row">
+        <div class="signup-field">
+          <label class="signup-label">Year of Completion</label>
+          <input type="text" name="request_year" class="signup-input" placeholder="e.g. 2027">
+        </div>
+        <div class="signup-field">
+          <label class="signup-label">Course</label>
+          <input type="text" name="request_course" class="signup-input" placeholder="Your course">
+        </div>
+      </div>
+
+      <div class="signup-field">
+        <label class="signup-label">Message (optional)</label>
+        <textarea name="request_message" class="signup-input" rows="3"
+                  placeholder="Explain why you need help..."></textarea>
+      </div>
+
+      <div class="signup-request-actions">
+        <button type="button" class="signup-request-send" onclick="sendRequest()">
+          Send Request
+        </button>
+        <button type="button" class="signup-request-cancel" onclick="toggleRequestForm()">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- Bottom link -->
+  <p class="signup-bottom">
+    Already have an account?
+    <a href="{{ url_for('member_login') }}">Log in here</a>
+  </p>
+
+</div>
+
+<script>
+  function toggleRequestForm() {
+    const box = document.getElementById('requestBox');
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    if (box.style.display === 'block') {
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function sendRequest() {
+    const form = document.querySelector('.signup-card');
+    const fd = new FormData();
+
+    fd.append('name', form.querySelector('[name="request_name"]').value);
+    fd.append('student_id', form.querySelector('[name="request_id"]').value);
+    fd.append('phone', form.querySelector('[name="request_phone"]').value);
+    fd.append('year_group', form.querySelector('[name="request_year"]').value);
+    fd.append('course', form.querySelector('[name="request_course"]').value);
+    fd.append('message', form.querySelector('[name="request_message"]').value);
+
+    // Also pass through the main form values if available
+    const mainName = form.querySelector('[name="name"]');
+    const mainPhone = form.querySelector('[name="phone"]');
+    const mainYear = form.querySelector('[name="year_group"]');
+    const mainId = form.querySelector('[name="student_id"]');
+    const mainCourse = form.querySelector('[name="course"]');
+    const mainGender = form.querySelector('[name="gender"]:checked');
+    const mainLevel = form.querySelector('[name="level"]');
+
+    if (mainName) fd.append('main_name', mainName.value || '');
+    if (mainPhone) fd.append('main_phone', mainPhone.value || '');
+    if (mainYear) fd.append('main_year', mainYear.value || '');
+    if (mainId) fd.append('main_id', mainId.value || '');
+    if (mainCourse) fd.append('main_course', mainCourse.value || '');
+    if (mainGender) fd.append('gender', mainGender.value);
+    if (mainLevel) fd.append('level', mainLevel.value || '');
+
+    // Minimal validation
+    if (!fd.get('name') && !fd.get('main_name')) {
+      alert('Please provide your name before sending the request.');
+      return;
+    }
+    if (!fd.get('phone') && !fd.get('main_phone')) {
+      alert('Please provide your phone number.');
+      return;
+    }
+
+    // Post to the request endpoint
+    fetch('{{ url_for("signup_request_code") }}', { method: 'POST', body: fd })
+      .then(function () {
+        window.location.href = '{{ url_for("member_login") }}';
+      })
+      .catch(function () {
+        alert('Could not send your request. Please try again.');
+      });
+  }
+</script>
+
+{% endblock %}

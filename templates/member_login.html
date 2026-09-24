@@ -1,0 +1,117 @@
+{% extends 'base_bare.html' %}
+{% block title %}Member Login — GNMTC SRC{% endblock %}
+
+{% block content %}
+
+<!-- ============ FLASH MESSAGES (fixed, top-center) ============ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="bare-flash-wrap">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ============ LOGIN CARD ============ -->
+<div class="login-clean-wrap">
+
+  <div class="login-clean-card">
+
+    <!-- Back link -->
+    <a href="{{ url_for('index') }}" class="login-back-link">← Back to Home</a>
+
+    <!-- Icon + Title -->
+    <div class="text-center mb-4">
+      <div class="login-clean-icon">
+        <img src="{{ url_for('static', filename='uploads/logo.png') }}"
+             alt="GNMTC SRC"
+             onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <span class="login-clean-fallback" style="display:none;">🎓</span>
+      </div>
+      <h1 class="login-clean-title">Member Login</h1>
+      <p class="login-clean-sub">Sign in with your Member ID to access the SRC portal</p>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" novalidate>
+
+      <!-- CSRF TOKEN — required by Flask-WTF -->
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Member ID -->
+      <div class="mb-3">
+        <label class="login-clean-label">Member ID</label>
+        <div class="login-clean-input-wrap">
+          <span class="login-clean-icon-field">🆔</span>
+          <input type="text" name="identifier"
+                 class="form-control login-clean-input"
+                 value="{{ prefill or '' }}"
+                 placeholder="Enter your Member ID" required autofocus
+                 autocomplete="off" autocorrect="off"
+                 autocapitalize="off" spellcheck="false">
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3">
+        <label class="login-clean-label">Password</label>
+        <div class="login-clean-input-wrap">
+          <span class="login-clean-icon-field">🔒</span>
+          <input type="password" name="password" id="passwordField"
+                 class="form-control login-clean-input"
+                 placeholder="Enter your password" required
+                 autocomplete="off" autocorrect="off"
+                 autocapitalize="off" spellcheck="false">
+          <button type="button" class="login-clean-toggle"
+                  onclick="togglePassword()" aria-label="Show password">👁️</button>
+        </div>
+      </div>
+
+      <!-- Remember + Forgot -->
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div class="form-check">
+          <input type="checkbox" name="remember" class="form-check-input" id="rememberChk">
+          <label class="form-check-label login-clean-label mb-0" for="rememberChk">
+            Remember me
+          </label>
+        </div>
+
+        <a href="{{ url_for('forgot_password') }}" class="login-forgot-link">
+          Forgot Password?
+        </a>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="login-clean-submit">
+        Login →
+      </button>
+
+    </form>
+
+    <!-- Divider -->
+    <div class="login-divider">
+      <span>Don't have an account?</span>
+    </div>
+
+    <!-- Sign up button -->
+    <a href="{{ url_for('signup') }}" class="login-signup-btn">
+      ✨ Sign Up
+    </a>
+
+  </div>
+
+</div>
+
+<script>
+  function togglePassword() {
+    const f = document.getElementById('passwordField');
+    f.type = f.type === 'password' ? 'text' : 'password';
+  }
+</script>
+
+{% endblock %}

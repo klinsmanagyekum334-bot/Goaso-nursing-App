@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<article>
+  <h1>{{ item.title }}</h1>
+  <p class="text-muted">By {{ item.author }} on {{ item.posted_at.strftime('%B %d, %Y') }}</p>
+  <hr>
+  <div style="white-space: pre-wrap;">{{ item.content }}</div>
+  <a href="{{ url_for('news') }}" class="btn btn-outline-secondary btn-sm mt-3">← Back to News</a>
+</article>
+{% endblock %}

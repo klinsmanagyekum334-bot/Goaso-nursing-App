@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Alumni Directory</h1>
+<form method="GET" class="row g-2 mb-4">
+  <div class="col-md-10">
+    <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="Search by name, program or year...">
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100">Search</button>
+  </div>
+</form>
+
+<div class="row">
+  {% for m in members %}
+  <div class="col-md-4 mb-3">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h5>{{ m.full_name }}</h5>
+        <p class="text-muted small mb-1">{{ m.program or '—' }} | {{ m.graduation_year or '—' }}</p>
+        <p class="small mb-1">📍 {{ m.location or 'Not specified' }}</p>
+        <p class="small mb-1">💼 {{ m.occupation or 'Not specified' }}</p>
+        <p class="small">{{ m.bio or '' }}</p>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <p class="text-muted">No alumni found.</p>
+  {% endfor %}
+</div>
+{% endblock %}

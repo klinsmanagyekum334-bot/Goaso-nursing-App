@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile — GNMTC{% endblock %}
+{% block content %}
+<div class="container my-5">
+  <h1>Edit Profile</h1>
+  <form method="POST" enctype="multipart/form-data" class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Full Name</label>
+      <input type="text" name="full_name" class="form-control"
+             value="{{ current_user.full_name }}" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Graduation Year</label>
+      <input type="text" name="graduation_year" class="form-control"
+             value="{{ current_user.graduation_year or '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Program</label>
+      <input type="text" name="program" class="form-control"
+             value="{{ current_user.program or '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Phone</label>
+      <input type="text" name="phone" class="form-control"
+             value="{{ current_user.phone or '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Occupation</label>
+      <input type="text" name="occupation" class="form-control"
+             value="{{ current_user.occupation or '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Location</label>
+      <input type="text" name="location" class="form-control"
+             value="{{ current_user.location or '' }}">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Bio</label>
+      <textarea name="bio" class="form-control" rows="4">{{ current_user.bio or '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Profile Picture</label>
+      <input type="file" name="profile_pic" class="form-control" accept="image/*">
+    </div>
+    <div class="col-12">
+      <button class="btn btn-primary">Save Changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

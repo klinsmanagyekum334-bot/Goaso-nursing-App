@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — {{ student.name }}{% endblock %}
+
+{% block content %}
+
+<!-- ============ PAGE HEADER ============ -->
+<section class="container my-5">
+  <div class="src-page-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <span class="eyebrow">My Account</span>
+        <h1 style="margin: 0; font-size: clamp(1.6rem, 3.5vw, 2.2rem);">
+          My Profile
+        </h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 0.35rem 0 0;">
+          View and manage your student details
+        </p>
+      </div>
+      <a href="{{ url_for('src_student') }}" class="btn btn-outline-primary">
+        ← Back to SRC Page
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="row g-4">
+
+    <!-- ============ PROFILE CARD (left column) ============ -->
+    <div class="col-md-4">
+      <div class="profile-card">
+        <div class="profile-pic-wrap">
+          {% if student.profile_pic %}
+            {% if student.profile_pic.startswith('http') %}
+              <img src="{{ student.profile_pic }}" alt="{{ student.name }}" class="profile-pic">
+            {% else %}
+              <img src="{{ url_for('static', filename='uploads/' + student.profile_pic) }}"
+                   alt="{{ student.name }}" class="profile-pic">
+            {% endif %}
+          {% else %}
+            <div class="profile-pic profile-pic-placeholder">
+              {{ student.name[0]|upper }}
+            </div>
+          {% endif %}
+        </div>
+
+        <h2 class="profile-name">{{ student.name }}</h2>
+        <p class="profile-role">
+          {% if student.status == 'Alumni' %}
+            🎓 Alumni
+          {% else %}
+            🟢 Active Student
+          {% endif %}
+        </p>
+
+        <div class="profile-meta">
+          <div class="profile-meta-row">
+            <span class="profile-meta-label">Student ID</span>
+            <span class="profile-meta-value"><code>{{ student.student_id }}</code></span>
+          </div>
+          <div class="profile-meta-row">
+            <span class="profile-meta-label">Login ID</span>
+            <span class="profile-meta-value"><code>{{ student.login_id }}</code></span>
+          </div>
+          <div class="profile-meta-row">
+            <span class="profile-meta-label">Status</span>
+            <span class="profile-meta-value">
+              <span class="status-badge status-{{ student.status|lower }}">
+                {{ student.status }}
+              </span>
+            </span>
+          </div>
+          <div class="profile-meta-row">
+            <span class="profile-meta-label">Phone</span>
+            <span class="profile-meta-value">{{ student.phone or '—' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EDIT FORMS (right column) ============ -->
+    <div class="col-md-8">
+
+      <!-- PROFILE DETAILS -->
+      <div class="profile-panel">
+        <div class="profile-panel-head">
+          <h3>Profile Details</h3>
+          <span class="profile-locked-note">
+            🔒 Name and Student ID cannot be changed
+          </span>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="save_profile">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" value="{{ student.name }}" disabled>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Student ID</label>
+              <input type="text" class="form-control"
+                     value="{{ student.student_id }}" disabled>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="text" name="phone" class="form-control"
+                     value="{{ student.phone or '' }}"
+                     placeholder="e.g. +233 24 000 0000">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Status</label>
+              <select name="status" class="form-select">
+                <option value="Active" {% if student.status == 'Active' %}selected{% endif %}>
+                  Active
+                </option>
+                <option value="Alumni" {% if student.status == 'Alumni' %}selected{% endif %}>
+                  Alumni
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Profile Picture — URL</label>
+              <input type="text" name="profile_pic_url" class="form-control"
+                     value="{{ student.profile_pic if student.profile_pic and student.profile_pic.startswith('http') else '' }}"
+                     placeholder="Paste a URL, or upload below">
+              {% if student.profile_pic and not student.profile_pic.startswith('http') %}
+              <small style="color: var(--muted); font-size: 0.78rem;">
+                Currently: uploaded file — <code>{{ student.profile_pic }}</code>
+              </small>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">…or Upload New Picture</label>
+              <input type="file" name="profile_pic" class="form-control" accept="image/*">
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- CHANGE PASSWORD -->
+      <div class="profile-panel">
+        <div class="profile-panel-head">
+          <h3>🔑 Change Password</h3>
+          <span class="profile-locked-note">
+            Updates your login password everywhere
+          </span>
+        </div>
+
+        <form method="POST">
+          <input type="hidden" name="action" value="change_password">
+
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label">Old Password</label>
+              <input type="password" name="old_password" class="form-control"
+                     placeholder="Enter your current password" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">New Password</label>
+              <input type="password" name="new_password" class="form-control"
+                     placeholder="At least 6 characters" required minlength="6">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" name="confirm_password" class="form-control"
+                     placeholder="Repeat the new password" required minlength="6">
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button class="btn btn-coral">🔑 Change Password</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
