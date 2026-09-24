@@ -7,5 +7,10 @@ Werkzeug==3.0.1
 python-dotenv==1.0.0
 psycopg2-binary==2.9.9
 gunicorn==21.2.0
-supabase==2.4.0
 python-dateutil==2.8.2
+supabase==2.4.0
+httpx==0.24.1
+gotrue==2.4.0
+storage3==0.5.4
+postgrest==0.13.1
+realtime==1.0.6
